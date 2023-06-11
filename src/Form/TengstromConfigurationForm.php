@@ -13,24 +13,25 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\Entity\File;
 use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
+use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class TengstromConfigurationForm extends ConfigFormBase {
   protected ThemeHandlerInterface $themeHandler;
   protected EntityStorageInterface $fileStorage;
   protected FileRepositoryInterface $fileRepository;
-  protected array $uploadDimensionsLogo;
-  protected array $uploadDimensionsEmailLogo;
-  protected array $uploadDimensionsFavicon;
+  protected UploadDimensions $uploadDimensionsLogo;
+  protected UploadDimensions $uploadDimensionsEmailLogo;
+  protected UploadDimensions $uploadDimensionsFavicon;
 
   public function __construct(
     ConfigFactoryInterface $configFactory,
     ThemeHandlerInterface $themeHandler,
     EntityStorageInterface $fileStorage,
     FileRepositoryInterface $fileRepository,
-    array $uploadDimensionsLogo,
-    array $uploadDimensionsEmailLogo,
-    array $uploadDimensionsFavicon
+    UploadDimensions $uploadDimensionsLogo,
+    UploadDimensions $uploadDimensionsEmailLogo,
+    UploadDimensions $uploadDimensionsFavicon
   ) {
     parent::__construct($configFactory);
 
@@ -46,14 +47,16 @@ class TengstromConfigurationForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container): static {
+    $tengstromConfiguration = $container->getParameter('tengstrom_configuration');
+
     return new static(
       $container->get('config.factory'),
       $container->get('theme_handler'),
       $container->get('entity_type.manager')->getStorage('file'),
       $container->get('file.repository'),
-      $container->getParameter('upload_dimensions.logo'),
-      $container->getParameter('upload_dimensions.email_logo'),
-      $container->getParameter('upload_dimensions.favicon')
+      UploadDimensions::fromArray($tengstromConfiguration['upload_dimensions']['logo']),
+      UploadDimensions::fromArray($tengstromConfiguration['upload_dimensions']['email_logo']),
+      UploadDimensions::fromArray($tengstromConfiguration['upload_dimensions']['favicon']),
     );
   }
 
@@ -83,8 +86,8 @@ class TengstromConfigurationForm extends ConfigFormBase {
         'Allowed extensions: @extensions<br />Optimal dimensions: @widthpx x @heightpx',
         [
           '@extensions' => 'gif png jpg jpeg webp',
-          '@width' => $this->uploadDimensionsLogo['width'],
-          '@height' => $this->uploadDimensionsLogo['height'],
+          '@width' => $this->uploadDimensionsLogo->getWidth(),
+          '@height' => $this->uploadDimensionsLogo->getHeight(),
         ]
       ),
       '#upload_validators'    => [
@@ -108,8 +111,8 @@ class TengstromConfigurationForm extends ConfigFormBase {
         'Allowed extensions: @extensions<br />Optimal dimensions: @widthpx x @heightpx',
         [
           '@extensions' => 'gif png jpg jpeg webp',
-          '@width' => $this->uploadDimensionsEmailLogo['width'],
-          '@height' => $this->uploadDimensionsEmailLogo['height'],
+          '@width' => $this->uploadDimensionsEmailLogo->getWidth(),
+          '@height' => $this->uploadDimensionsEmailLogo->getHeight(),
         ]
       ),
       '#upload_validators'    => [
@@ -133,8 +136,8 @@ class TengstromConfigurationForm extends ConfigFormBase {
         'Allowed extensions: @extensions<br />Optimal dimensions: @widthpx x @heightpx',
         [
           '@extensions' => 'ico gif png jpg jpeg',
-          '@width' => $this->uploadDimensionsFavicon['width'],
-          '@height' => $this->uploadDimensionsFavicon['height'],
+          '@width' => $this->uploadDimensionsFavicon->getWidth(),
+          '@height' => $this->uploadDimensionsFavicon->getHeight(),
         ]
       ),
       '#upload_validators'    => [
@@ -158,7 +161,7 @@ class TengstromConfigurationForm extends ConfigFormBase {
     $this->submitLogoEmail($form_state);
     $this->submitFavicon($form_state);
 
-    return parent::submitForm($form, $form_state);
+    parent::submitForm($form, $form_state);
   }
 
   protected function getEditableConfigNames(): array {
