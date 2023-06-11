@@ -1,0 +1,9 @@
+{
+    "name": "drupal/tengstrom_configuration",
+    "type": "drupal-module--tengstrom",
+    "require": {
+        "drupal/core": "^9.4 || ^10",
+        "drupal/tengstrom_general": "dev-master"
+    }
+}
+

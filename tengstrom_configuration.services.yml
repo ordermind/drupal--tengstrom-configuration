@@ -1,0 +1,4 @@
+services:
+  # Hook handlers
+  tengstrom_configuration.hook_handlers.preprocess_image_widget:
+    class: Drupal\tengstrom_configuration\HookHandlers\PreprocessHandlers\PreprocessImageWidgetHandler
