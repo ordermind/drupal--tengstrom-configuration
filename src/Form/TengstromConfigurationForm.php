@@ -189,7 +189,7 @@ class TengstromConfigurationForm extends ConfigFormBase {
     }
     else {
       $themeConfig->set('logo.use_default', TRUE);
-      $themeConfig->set('logo.path', NULL);
+      $themeConfig->set('logo.path', '');
     }
     $themeConfig->save();
   }
@@ -233,7 +233,7 @@ class TengstromConfigurationForm extends ConfigFormBase {
     }
     else {
       $themeConfig->set('favicon.use_default', TRUE);
-      $themeConfig->set('favicon.path', NULL);
+      $themeConfig->set('favicon.path', '');
     }
     $themeConfig->save();
   }
