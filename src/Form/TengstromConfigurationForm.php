@@ -269,7 +269,7 @@ class TengstromConfigurationForm extends ConfigFormBase {
 
     $foundFiles = $this->fileStorage->loadByProperties(['uuid' => $uuid]);
     if ($newFile = reset($foundFiles)) {
-      return $newFile->id();
+      return (int) $newFile->id();
     }
 
     return NULL;
