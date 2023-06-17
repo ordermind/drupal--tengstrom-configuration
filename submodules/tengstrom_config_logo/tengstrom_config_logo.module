@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_form_tengstrom_configuration_form_alter().
+ */
+function tengstrom_config_logo_form_tengstrom_configuration_form_alter(array &$form, FormStateInterface $formState, string $formId): void {
+  /** @var \Drupal\tengstrom_config_logo\HookHandlers\FormAlterHandlers\TengstromConfigFormAlter $service */
+  $service = \Drupal::service('tengstrom_config_logo.hook_handlers.tengstrom_config_form_alter');
+
+  $service->alter($form, $formState, $formId);
+}

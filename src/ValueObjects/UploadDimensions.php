@@ -14,6 +14,13 @@ class UploadDimensions {
   }
 
   public static function fromArray(array $values): static {
+    if (empty($values['width'])) {
+      throw new \InvalidArgumentException('Width is required in upload dimensions');
+    }
+    if (empty($values['height'])) {
+      throw new \InvalidArgumentException('Height is required in upload dimensions');
+    }
+
     return new static($values['width'], $values['height']);
   }
 

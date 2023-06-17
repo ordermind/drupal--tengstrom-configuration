@@ -10,13 +10,14 @@ use Drupal\Core\Extension\ThemeHandlerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\file\Entity\File;
-use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
+use Drupal\tengstrom_configuration\Concerns\UploadsFiles;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class TengstromConfigurationForm extends ConfigFormBase {
+  use UploadsFiles;
+
   protected ThemeHandlerInterface $themeHandler;
   protected EntityStorageInterface $fileStorage;
   protected FileRepositoryInterface $fileRepository;
@@ -75,31 +76,6 @@ class TengstromConfigurationForm extends ConfigFormBase {
 
     $form = parent::buildForm($form, $form_state);
 
-    $form['logo'] = [
-      '#type'                 => 'managed_file',
-      '#upload_location'      => 'public://',
-      '#default_value' => array_filter(
-        [$this->getFileIdFromUuid($config->get('logo_uuid'))]
-      ),
-      '#multiple'             => FALSE,
-      '#description'          => $this->t(
-        'Allowed extensions: @extensions<br />Optimal dimensions: @widthpx x @heightpx',
-        [
-          '@extensions' => 'gif png jpg jpeg webp',
-          '@width' => $this->uploadDimensionsLogo->getWidth(),
-          '@height' => $this->uploadDimensionsLogo->getHeight(),
-        ]
-      ),
-      '#upload_validators'    => [
-        'file_validate_is_image'      => [],
-        'file_validate_extensions'    => ['gif png jpg jpeg webp'],
-        'file_validate_size'          => [25600000],
-      ],
-      '#title'                => $this->t('Logo'),
-      '#theme' => 'image_widget',
-      '#preview_image_style' => 'medium',
-    ];
-
     $form['logo_email'] = [
       '#type'                 => 'managed_file',
       '#upload_location'      => 'public://',
@@ -157,7 +133,6 @@ class TengstromConfigurationForm extends ConfigFormBase {
    * {@inheritDoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    $this->submitLogo($form_state);
     $this->submitLogoEmail($form_state);
     $this->submitFavicon($form_state);
 
@@ -169,29 +144,6 @@ class TengstromConfigurationForm extends ConfigFormBase {
       'tengstrom_configuration.settings',
       $this->themeHandler->getDefault() . '.settings',
     ];
-  }
-
-  protected function submitLogo(FormStateInterface $form_state): void {
-    $moduleConfig = $this->config('tengstrom_configuration.settings');
-    $newFile = $this->saveFileField($form_state, 'logo');
-    if ($newFile) {
-      $moduleConfig->set('logo_uuid', $newFile->uuid());
-    }
-    else {
-      $moduleConfig->set('logo_uuid', NULL);
-    }
-    $moduleConfig->save();
-
-    $themeConfig = $this->config($this->themeHandler->getDefault() . '.settings');
-    if ($newFile) {
-      $themeConfig->set('logo.use_default', FALSE);
-      $themeConfig->set('logo.path', $newFile->getFileUri());
-    }
-    else {
-      $themeConfig->set('logo.use_default', TRUE);
-      $themeConfig->set('logo.path', '');
-    }
-    $themeConfig->save();
   }
 
   protected function submitLogoEmail(FormStateInterface $form_state): void {
@@ -238,58 +190,8 @@ class TengstromConfigurationForm extends ConfigFormBase {
     $themeConfig->save();
   }
 
-  protected function saveFileField(FormStateInterface $form_state, string $fieldName): ?File {
-    $fileData = $form_state->getValue($fieldName);
-    $oldFile = $this->getOldFile($form_state, $fieldName);
-
-    if (!$fileData) {
-      if ($oldFile) {
-        $this->fileStorage->delete([$oldFile]);
-      }
-
-      return NULL;
-    }
-
-    $newFile = File::load($fileData[0]);
-    $newFile->setPermanent();
-    $newFile->save();
-
-    // File has been changed, delete the old one.
-    if ($oldFile && $newFile->uuid() !== $oldFile->uuid()) {
-      $this->fileStorage->delete([$oldFile]);
-    }
-
-    return $newFile;
-  }
-
-  protected function getFileIdFromUuid(?string $uuid): ?int {
-    if (!$uuid) {
-      return NULL;
-    }
-
-    $foundFiles = $this->fileStorage->loadByProperties(['uuid' => $uuid]);
-    if ($newFile = reset($foundFiles)) {
-      return (int) $newFile->id();
-    }
-
-    return NULL;
-  }
-
-  protected function getNewFileUriFromRename(FileInterface $file, string $newFilenameWithoutExtension): string {
-    $oldFilename = $file->getFilename();
-    $oldParts = explode('.', $oldFilename);
-    $newFilename = basename($newFilenameWithoutExtension) . '.' . end($oldParts);
-
-    return str_replace($oldFilename, $newFilename, $file->getFileUri());
-  }
-
-  protected function getOldFile(FormStateInterface $form_state, string $fieldName): ?File {
-    $oldFileId = reset($form_state->getCompleteForm()[$fieldName]['#default_value']);
-    if (!$oldFileId) {
-      return NULL;
-    }
-
-    return $this->fileStorage->load($oldFileId);
+  protected function getFileStorage(): EntityStorageInterface {
+    return $this->fileStorage;
   }
 
 }
