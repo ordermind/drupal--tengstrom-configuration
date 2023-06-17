@@ -76,6 +76,8 @@ class TengstromConfigurationForm extends ConfigFormBase {
 
     $form = parent::buildForm($form, $form_state);
 
+    $form['#attributes']['class'][] = 'tengstrom-form';
+
     $form['logo_email'] = [
       '#type'                 => 'managed_file',
       '#upload_location'      => 'public://',
