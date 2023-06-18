@@ -2,6 +2,5 @@ tengstrom_configuration.form:
   path: '/admin/config/system/site-configuration'
   defaults:
     _form: '\Drupal\tengstrom_configuration\Form\TengstromConfigurationForm'
-    _title: 'Logo / favicon'
   requirements:
     _permission: 'tengstrom_configuration__access_site_configuration_form'

@@ -2,15 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Drupal\tengstrom_config_email_logo\HookHandlers\FormAlterHandlers;
+namespace Drupal\tengstrom_config_favicon\HookHandlers\FormAlterHandlers;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ThemeHandlerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\file\FileRepositoryInterface;
 use Drupal\tengstrom_configuration\Concerns\UploadsFiles;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
 use Drupal\tengstrom_general\HookHandlers\FormAlterHandlers\FormAlterHandlerInterface;
@@ -19,11 +21,12 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   use UploadsFiles;
   use DependencySerializationTrait;
 
-  protected const DEFAULT_PREVIEW_IMAGE_STYLE = 'medium';
+  protected const DEFAULT_PREVIEW_IMAGE_STYLE = 'original';
 
   protected ConfigFactoryInterface $configFactory;
   protected EntityStorageInterface $fileStorage;
   protected EntityStorageInterface $imageStyleStorage;
+  protected FileRepositoryInterface $fileRepository;
   protected ThemeHandlerInterface $themeHandler;
   protected TranslationInterface $translator;
   protected UploadDimensions $uploadDimensions;
@@ -31,22 +34,24 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   public function __construct(
     ConfigFactoryInterface $configFactory,
     EntityTypeManagerInterface $entityTypeManager,
+    FileRepositoryInterface $fileRepository,
     ThemeHandlerInterface $themeHandler,
     TranslationInterface $translator,
     array $tengstromConfiguration
   ) {
-    if (empty($tengstromConfiguration['upload_dimensions']['email_logo'])) {
+    if (empty($tengstromConfiguration['upload_dimensions']['favicon'])) {
       throw new \RuntimeException(
-        'There must be an email_logo upload dimensions entry in the tengstrom config parameter (likely defined in sites/default/services.yml)'
+        'There must be a favicon upload dimensions entry in the tengstrom config parameter (likely defined in sites/default/services.yml)'
       );
     }
 
     $this->configFactory = $configFactory;
     $this->fileStorage = $entityTypeManager->getStorage('file');
     $this->imageStyleStorage = $entityTypeManager->getStorage('image_style');
+    $this->fileRepository = $fileRepository;
     $this->themeHandler = $themeHandler;
     $this->translator = $translator;
-    $this->uploadDimensions = UploadDimensions::fromArray($tengstromConfiguration['upload_dimensions']['email_logo']);
+    $this->uploadDimensions = UploadDimensions::fromArray($tengstromConfiguration['upload_dimensions']['favicon']);
   }
 
   public function alter(array &$form, FormStateInterface $formState, string $formId): void {
@@ -54,9 +59,9 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
       throw new \RuntimeException('The image style "' . $this->getPreviewImageStyle() . '" is missing!');
     }
 
-    $config = $this->configFactory->get('tengstrom_config_email_logo.settings');
+    $config = $this->configFactory->get('tengstrom_config_favicon.settings');
 
-    $form['email_logo'] = [
+    $form['favicon'] = [
       '#type'                 => 'managed_file',
       '#upload_location'      => 'public://',
       '#default_value' => array_filter(
@@ -76,26 +81,45 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
         'file_validate_extensions'    => ['gif png jpg jpeg webp'],
         'file_validate_size'          => [25600000],
       ],
-      '#title'                => $this->translator->translate('Logo for e-mail'),
+      '#title'                => $this->translator->translate('Favicon'),
       '#theme' => 'image_widget',
       '#preview_image_style' => $this->getPreviewImageStyle(),
-      '#weight' => -5,
+      '#weight' => 0,
     ];
 
     $form['#submit'][] = [$this, 'submit'];
   }
 
   public function submit(array &$form, FormStateInterface $form_state): void {
-    $moduleConfig = $this->configFactory->getEditable('tengstrom_config_email_logo.settings');
-
-    $newFile = $this->saveFileField($form_state, 'email_logo');
+    $moduleConfig = $this->configFactory->getEditable('tengstrom_config_favicon.settings');
+    $oldFile = $this->getOldFile($form_state, 'favicon');
+    $newFile = $this->saveFileField($form_state, 'favicon');
     if ($newFile) {
+      if (!$oldFile || $newFile->uuid() !== $oldFile->uuid()) {
+        $newFile = $this->fileRepository->move(
+          $newFile,
+          $this->getNewFileUriFromRename($newFile, 'favicon'),
+          FileSystemInterface::EXISTS_REPLACE
+        );
+      }
+
       $moduleConfig->set('uuid', $newFile->uuid());
     }
     else {
       $moduleConfig->set('uuid', NULL);
     }
     $moduleConfig->save();
+
+    $themeConfig = $this->configFactory->getEditable($this->themeHandler->getDefault() . '.settings');
+    if ($newFile) {
+      $themeConfig->set('favicon.use_default', FALSE);
+      $themeConfig->set('favicon.path', $newFile->getFileUri());
+    }
+    else {
+      $themeConfig->set('favicon.use_default', TRUE);
+      $themeConfig->set('favicon.path', '');
+    }
+    $themeConfig->save();
   }
 
   /**

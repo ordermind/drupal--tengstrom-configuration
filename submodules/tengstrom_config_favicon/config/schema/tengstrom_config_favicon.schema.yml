@@ -1,7 +1,7 @@
-tengstrom_configuration.settings:
+tengstrom_config_favicon.settings:
   type: config_object
-  label: 'Tengström Configuration settings'
+  label: 'Tengström Configuration Favicon settings'
   mapping:
-    favicon_uuid:
+    uuid:
       type: uuid
       label: 'Uuid to favicon in managed file table'

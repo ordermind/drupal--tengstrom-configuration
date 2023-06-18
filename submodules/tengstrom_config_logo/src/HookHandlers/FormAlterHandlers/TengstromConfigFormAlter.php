@@ -19,8 +19,11 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   use UploadsFiles;
   use DependencySerializationTrait;
 
+  protected const DEFAULT_PREVIEW_IMAGE_STYLE = 'medium';
+
   protected ConfigFactoryInterface $configFactory;
   protected EntityStorageInterface $fileStorage;
+  protected EntityStorageInterface $imageStyleStorage;
   protected ThemeHandlerInterface $themeHandler;
   protected TranslationInterface $translator;
   protected UploadDimensions $uploadDimensions;
@@ -40,12 +43,17 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
 
     $this->configFactory = $configFactory;
     $this->fileStorage = $entityTypeManager->getStorage('file');
+    $this->imageStyleStorage = $entityTypeManager->getStorage('image_style');
     $this->themeHandler = $themeHandler;
     $this->translator = $translator;
     $this->uploadDimensions = UploadDimensions::fromArray($tengstromConfiguration['upload_dimensions']['logo']);
   }
 
   public function alter(array &$form, FormStateInterface $formState, string $formId): void {
+    if (!$this->imageStyleStorage->load($this->getPreviewImageStyle())) {
+      throw new \RuntimeException('The image style "' . $this->getPreviewImageStyle() . '" is missing!');
+    }
+
     $config = $this->configFactory->get('tengstrom_config_logo.settings');
 
     $form['logo'] = [
@@ -70,7 +78,7 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
       ],
       '#title'                => $this->translator->translate('Logo'),
       '#theme' => 'image_widget',
-      '#preview_image_style' => 'medium',
+      '#preview_image_style' => $this->getPreviewImageStyle(),
       '#weight' => -10,
     ];
 
@@ -100,9 +108,16 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
     $themeConfig->save();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   protected function getFileStorage(): EntityStorageInterface {
     return $this->fileStorage;
 
+  }
+
+  protected function getPreviewImageStyle(): string {
+    return static::DEFAULT_PREVIEW_IMAGE_STYLE;
   }
 
 }
