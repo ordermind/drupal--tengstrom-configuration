@@ -40,6 +40,8 @@ class TengstromConfigurationForm extends FormBase {
   /**
    * {@inheritDoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state): void {}
+  public function submitForm(array &$form, FormStateInterface $form_state): void {
+    $this->messenger()->addStatus($this->t('The configuration options have been saved.'));
+  }
 
 }
