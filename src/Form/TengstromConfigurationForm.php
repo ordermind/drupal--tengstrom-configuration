@@ -78,31 +78,6 @@ class TengstromConfigurationForm extends ConfigFormBase {
 
     $form['#attributes']['class'][] = 'tengstrom-form';
 
-    $form['logo_email'] = [
-      '#type'                 => 'managed_file',
-      '#upload_location'      => 'public://',
-      '#default_value' => array_filter(
-        [$this->getFileIdFromUuid($config->get('logo_email_uuid'))]
-      ),
-      '#multiple'             => FALSE,
-      '#description'          => $this->t(
-        'Allowed extensions: @extensions<br />Optimal dimensions: @widthpx x @heightpx',
-        [
-          '@extensions' => 'gif png jpg jpeg webp',
-          '@width' => $this->uploadDimensionsEmailLogo->getWidth(),
-          '@height' => $this->uploadDimensionsEmailLogo->getHeight(),
-        ]
-      ),
-      '#upload_validators'    => [
-        'file_validate_is_image'      => [],
-        'file_validate_extensions'    => ['gif png jpg jpeg webp'],
-        'file_validate_size'          => [25600000],
-      ],
-      '#title'                => $this->t('Logo for e-mail'),
-      '#theme' => 'image_widget',
-      '#preview_image_style' => 'medium',
-    ];
-
     $form['favicon'] = [
       '#type'                 => 'managed_file',
       '#upload_location'      => 'public://',
@@ -135,7 +110,6 @@ class TengstromConfigurationForm extends ConfigFormBase {
    * {@inheritDoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    $this->submitLogoEmail($form_state);
     $this->submitFavicon($form_state);
 
     parent::submitForm($form, $form_state);
@@ -146,18 +120,6 @@ class TengstromConfigurationForm extends ConfigFormBase {
       'tengstrom_configuration.settings',
       $this->themeHandler->getDefault() . '.settings',
     ];
-  }
-
-  protected function submitLogoEmail(FormStateInterface $form_state): void {
-    $moduleConfig = $this->config('tengstrom_configuration.settings');
-    $newFile = $this->saveFileField($form_state, 'logo_email');
-    if ($newFile) {
-      $moduleConfig->set('logo_email_uuid', $newFile->uuid());
-    }
-    else {
-      $moduleConfig->set('logo_email_uuid', NULL);
-    }
-    $moduleConfig->save();
   }
 
   protected function submitFavicon(FormStateInterface $form_state): void {

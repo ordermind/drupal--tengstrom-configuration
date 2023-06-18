@@ -2,9 +2,6 @@ tengstrom_configuration.settings:
   type: config_object
   label: 'Tengström Configuration settings'
   mapping:
-    logo_email_uuid:
-      type: uuid
-      label: 'Uuid to e-mail logo in managed file table'
     favicon_uuid:
       type: uuid
       label: 'Uuid to favicon in managed file table'

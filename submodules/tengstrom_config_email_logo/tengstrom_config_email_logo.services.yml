@@ -1,0 +1,10 @@
+services:
+  # Hook handlers
+  tengstrom_config_email_logo.hook_handlers.tengstrom_config_form_alter:
+    class: Drupal\tengstrom_config_email_logo\HookHandlers\FormAlterHandlers\TengstromConfigFormAlter
+    arguments:
+      - '@config.factory'
+      - '@entity_type.manager'
+      - '@theme_handler'
+      - '@string_translation'
+      - '%tengstrom_configuration%'
