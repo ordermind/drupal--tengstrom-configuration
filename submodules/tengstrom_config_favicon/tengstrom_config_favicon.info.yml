@@ -7,6 +7,5 @@ core_version_requirement: ^9 || ^10
 dependencies:
   - drupal:image
   - tengstrom_configuration:tengstrom_configuration
-  - tengstrom_general:tengstrom_general
 
 version: 0.1.0
