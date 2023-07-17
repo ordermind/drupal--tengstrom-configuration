@@ -15,7 +15,7 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\tengstrom_configuration\Concerns\UploadsFiles;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
-use Drupal\tengstrom_general\HookHandlers\FormAlterHandlers\FormAlterHandlerInterface;
+use Ordermind\DrupalTengstromShared\HookHandlers\FormAlterHandlerInterface;
 
 class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   use UploadsFiles;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Drupal\tengstrom_configuration\HookHandlers\PreprocessHandlers;
 
 use Drupal\Core\Render\Element;
-use Drupal\tengstrom_general\HookHandlers\PreprocessHandlers\PreprocessHandlerInterface;
+use Ordermind\DrupalTengstromShared\HookHandlers\PreprocessHandlerInterface;
 
 class PreprocessImageWidgetHandler implements PreprocessHandlerInterface {
 
