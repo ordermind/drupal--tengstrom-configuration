@@ -4,4 +4,7 @@ package: Tengström Profile
 type: module
 core_version_requirement: ^9 || ^10
 
+dependencies:
+  - upload_field_improvements:upload_field_improvements
+
 version: 0.1.0
