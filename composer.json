@@ -6,16 +6,10 @@
             "type": "vcs",
             "url": "git@github.com:ordermind/drupal--tengstrom-shared.git",
             "no-api": true
-        },
-        {
-            "type": "vcs",
-            "url": "git@github.com:ordermind/drupal--upload-field-improvements.git",
-            "no-api": true
         }
     ],
     "require": {
         "drupal/core": "^9.4 || ^10",
-        "drupal/upload_field_improvements": "dev-master",
         "ordermind/drupal--tengstrom-shared": "dev-master"
     }
 }
