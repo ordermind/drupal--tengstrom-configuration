@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Drupal\tengstrom_configuration\ElementBuilders;
+namespace Drupal\tengstrom_configuration\Factories;
 
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -24,6 +24,10 @@ class ImageElementDefaultDescriptionFactory {
     FileSize $maxSize,
     ?UploadDimensions $optimalDimensions = NULL
   ): TranslatableMarkup {
+    if (!$allowedExtensions) {
+      throw new \InvalidArgumentException('Please supply at least one allowed extension.');
+    }
+
     $translationArguments = [
       '@extensions' => implode(' ', $allowedExtensions),
       '@size' => $maxSize->getFormattedValue(),

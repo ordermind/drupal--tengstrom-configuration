@@ -6,6 +6,7 @@ namespace Drupal\tengstrom_configuration\ElementBuilders;
 
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\tengstrom_configuration\Factories\ImageElementDefaultDescriptionFactory;
 use Drupal\tengstrom_configuration\ValueObjects\FileSize;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
 use Twig\Error\RuntimeError;
@@ -114,6 +115,10 @@ class ImageElementBuilder {
       if (!isset($this->{$propertyName})) {
         throw new RuntimeError("The property \"{$propertyName}\" must be set before building the element.");
       }
+    }
+
+    if (!$this->allowedExtensions) {
+      throw new \InvalidArgumentException('Please supply at least one allowed extension.');
     }
 
     return [
