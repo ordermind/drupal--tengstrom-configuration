@@ -10,6 +10,8 @@
     ],
     "require": {
         "drupal/core": "^9.4 || ^10",
+        "drupal/confi": "^3.0",
+        "drupal/config_split": "^2.0-rc3",
         "ordermind/drupal--tengstrom-shared": "dev-master"
     }
 }

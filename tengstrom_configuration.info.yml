@@ -4,4 +4,8 @@ package: Tengström Profile
 type: module
 core_version_requirement: ^9 || ^10
 
+dependencies:
+  - config_split:config_split
+  - confi:config_import
+
 version: 0.1.0

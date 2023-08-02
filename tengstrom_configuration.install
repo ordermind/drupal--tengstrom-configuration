@@ -1,0 +1,52 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Implements hook_install().
+ */
+function tengstrom_configuration_install() {
+  _tengstrom_configuration_import_config();
+  // _tengstrom_configuration_enable_split_config();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function tengstrom_configuration_uninstall() {
+  // _tengstrom_configuration_disable_split_config();
+}
+
+function _tengstrom_configuration_import_config() {
+  /** @var \Drupal\config_import\ConfigImporterServiceInterface $importer */
+  $importer = \Drupal::service('config_import.importer');
+  $directory = \Drupal::service('extension.list.module')->getPath('tengstrom_configuration') . '/config/sync';
+  $importer->setDirectory($directory);
+  $configs = array_map(
+    fn(string $path) => pathinfo($path, PATHINFO_FILENAME),
+    glob("{$directory}/*.yml")
+  );
+  $importer->importConfigs($configs);
+}
+
+/**
+ * Enable the split config to prevent that the imported config
+ * is accidentally exported to main config folder.
+ */
+function _tengstrom_configuration_enable_split_config() {
+  /** @var \Drupal\config_split\Entity\ConfigSplitEntityInterface $entity */
+  $entity = \Drupal::entityTypeManager()->getStorage('config_split')->load('tengstrom_configuration_config');
+  $entity->set('status', TRUE);
+  $entity->save();
+}
+
+/**
+ * Disable the split config to prevent that the config files
+ * are deleted during a config export.
+ */
+function _tengstrom_configuration_disable_split_config() {
+  /** @var \Drupal\config_split\Entity\ConfigSplitEntityInterface $entity */
+  $entity = \Drupal::entityTypeManager()->getStorage('config_split')->load('tengstrom_configuration_config');
+  $entity->set('status', FALSE);
+  $entity->save();
+}
