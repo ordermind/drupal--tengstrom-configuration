@@ -7,14 +7,14 @@ declare(strict_types=1);
  */
 function tengstrom_configuration_install() {
   _tengstrom_configuration_import_config();
-  // _tengstrom_configuration_enable_split_config();
+  _tengstrom_configuration_enable_split_config();
 }
 
 /**
  * Implements hook_uninstall().
  */
 function tengstrom_configuration_uninstall() {
-  // _tengstrom_configuration_disable_split_config();
+  _tengstrom_configuration_disable_split_config();
 }
 
 function _tengstrom_configuration_import_config() {
