@@ -2,3 +2,15 @@ services:
   # Hook handlers
   tengstrom_configuration.hook_handlers.preprocess_image_widget:
     class: Drupal\tengstrom_configuration\HookHandlers\PreprocessHandlers\PreprocessImageWidgetHandler
+
+  # Other services
+  tengstrom_configuration.image_element_description_factory:
+    class: Drupal\tengstrom_configuration\Factories\ImageElementDefaultDescriptionFactory
+    arguments:
+      - '@string_translation'
+
+  tengstrom_configuration.image_element_builder:
+    class: Drupal\tengstrom_configuration\ElementBuilders\ImageElementBuilder
+    arguments:
+      - '@string_translation'
+      - '@tengstrom_configuration.image_element_description_factory'
