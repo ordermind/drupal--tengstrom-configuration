@@ -10,6 +10,7 @@ use Drupal\Core\StringTranslation\TranslationManager;
 use Drupal\tengstrom_configuration\Factories\ImageElementDefaultDescriptionFactory;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
 use Drupal\Tests\UnitTestCase;
+use Ordermind\Helpers\ValueObject\Integer\PositiveInteger;
 
 class ImageElementDefaultDescriptionFactoryTest extends UnitTestCase {
 
@@ -41,7 +42,7 @@ class ImageElementDefaultDescriptionFactoryTest extends UnitTestCase {
   public function provideCreateCases(): array {
     return [
       ['Allowed extensions: png jpg<br />Max size: 20 KB', ['png', 'jpg'], new FileSize('20 kB'), NULL],
-      ['Allowed extensions: png gif<br />Optimal dimensions: 20px x 40px<br />Max size: 2 MB', ['png', 'gif'], new FileSize('2.00 MB'), new UploadDimensions(20, 40)],
+      ['Allowed extensions: png gif<br />Optimal dimensions: 20px x 40px<br />Max size: 2 MB', ['png', 'gif'], new FileSize('2.00 MB'), new UploadDimensions(new PositiveInteger(20), new PositiveInteger(40))],
     ];
   }
 

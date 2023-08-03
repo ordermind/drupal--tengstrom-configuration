@@ -36,8 +36,8 @@ class ImageElementDefaultDescriptionFactory {
     $translationString = 'Allowed extensions: @extensions';
     if ($optimalDimensions) {
       $translationString .= '<br />Optimal dimensions: @widthpx x @heightpx';
-      $translationArguments['@width'] = $optimalDimensions->getWidth();
-      $translationArguments['@height'] = $optimalDimensions->getHeight();
+      $translationArguments['@width'] = $optimalDimensions->getWidth()->getValue();
+      $translationArguments['@height'] = $optimalDimensions->getHeight()->getValue();
     }
     $translationString .= '<br />Max size: @size';
 

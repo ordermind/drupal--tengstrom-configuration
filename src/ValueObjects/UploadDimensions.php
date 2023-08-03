@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Drupal\tengstrom_configuration\ValueObjects;
 
-class UploadDimensions {
-  protected int $width;
-  protected int $height;
+use Ordermind\Helpers\ValueObject\Integer\PositiveInteger;
 
-  public function __construct(int $width, int $height) {
+class UploadDimensions {
+  protected PositiveInteger $width;
+  protected PositiveInteger $height;
+
+  public function __construct(PositiveInteger $width, PositiveInteger $height) {
     $this->width = $width;
     $this->height = $height;
   }
@@ -24,11 +26,11 @@ class UploadDimensions {
     return new static($values['width'], $values['height']);
   }
 
-  public function getWidth(): int {
+  public function getWidth(): PositiveInteger {
     return $this->width;
   }
 
-  public function getHeight(): int {
+  public function getHeight(): PositiveInteger {
     return $this->height;
   }
 
