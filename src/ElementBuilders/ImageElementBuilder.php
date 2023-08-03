@@ -92,6 +92,10 @@ class ImageElementBuilder {
    * @param string[] $allowedExtensions
    */
   public function withAllowedExtensions(array $allowedExtensions): static {
+    if (!$allowedExtensions) {
+      throw new \InvalidArgumentException('Please supply at least one allowed extension.');
+    }
+
     $this->allowedExtensions = $allowedExtensions;
 
     return $this;
@@ -114,10 +118,6 @@ class ImageElementBuilder {
       if (!isset($this->{$propertyName})) {
         throw new RuntimeError("The property \"{$propertyName}\" must be set before building the element.");
       }
-    }
-
-    if (!$this->allowedExtensions) {
-      throw new \InvalidArgumentException('Please supply at least one allowed extension.');
     }
 
     return [
