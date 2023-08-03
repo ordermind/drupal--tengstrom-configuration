@@ -9,6 +9,7 @@
         }
     ],
     "require": {
+        "chrisullyott/php-filesize": "^4.2",
         "drupal/core": "^9.4 || ^10",
         "ordermind/drupal--tengstrom-shared": "dev-master"
     }
