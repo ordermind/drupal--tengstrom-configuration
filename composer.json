@@ -11,7 +11,8 @@
     "require": {
         "chrisullyott/php-filesize": "^4.2",
         "drupal/core": "^9.4 || ^10",
-        "ordermind/drupal--tengstrom-shared": "dev-master"
+        "ordermind/drupal--tengstrom-shared": "dev-master",
+        "ordermind/php-helpers": "^2.0"
     }
 }
 
