@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\tengstrom_configuration\ElementBuilders;
 
+use ChrisUllyott\FileSize;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\tengstrom_configuration\Factories\ImageElementDefaultDescriptionFactory;
-use Drupal\tengstrom_configuration\ValueObjects\FileSize;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
 use Twig\Error\RuntimeError;
 
@@ -51,8 +51,7 @@ class ImageElementBuilder {
   }
 
   protected function getDefaultMaxSize(): FileSize {
-    // 2 MB
-    return new FileSize(2 * pow(2, 20));
+    return new FileSize('2 MB');
   }
 
   protected function getMaxSize(): FileSize {
@@ -132,7 +131,7 @@ class ImageElementBuilder {
       '#upload_validators'    => [
         'file_validate_is_image'      => [],
         'file_validate_extensions'    => implode(' ', $this->allowedExtensions),
-        'file_validate_size'          => [$this->getMaxSize()->getRawValueInBytes()],
+        'file_validate_size'          => [$this->getMaxSize()->as('B')],
       ],
       '#title'                => $this->label,
       '#theme' => 'image_widget',

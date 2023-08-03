@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\tengstrom_configuration\Factories;
 
+use ChrisUllyott\FileSize;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
-use Drupal\tengstrom_configuration\ValueObjects\FileSize;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
 
 class ImageElementDefaultDescriptionFactory {
@@ -30,7 +30,7 @@ class ImageElementDefaultDescriptionFactory {
 
     $translationArguments = [
       '@extensions' => implode(' ', $allowedExtensions),
-      '@size' => $maxSize->getFormattedValue(),
+      '@size' => $maxSize->asAuto(),
     ];
 
     $translationString = 'Allowed extensions: @extensions';
