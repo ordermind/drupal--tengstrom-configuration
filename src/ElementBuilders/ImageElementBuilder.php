@@ -30,10 +30,11 @@ class ImageElementBuilder {
   /** @property string[] */
   protected array $allowedExtensions = ['gif', 'png', 'jpg', 'jpeg', 'webp'];
   protected ?FileSize $maxSize;
-  protected string $previewImageStyle = 'config_thumbnail';
+  protected ?string $previewImageStyle = NULL;
 
   protected const REQUIRED_PROPERTIES = [
     'label',
+    'previewImageStyle',
   ];
 
   public function __construct(

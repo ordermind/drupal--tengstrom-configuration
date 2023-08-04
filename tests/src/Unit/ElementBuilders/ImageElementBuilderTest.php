@@ -12,8 +12,7 @@ use Drupal\Core\StringTranslation\TranslationManager;
 use Drupal\tengstrom_configuration\ElementBuilders\ImageElementBuilder;
 use Drupal\tengstrom_configuration\Factories\ImageElementDefaultDescriptionFactory;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
-use Drupal\Tests\tengstrom_general\Unit\Fixtures\TestConfigEntityRepository;
-use Drupal\Tests\tengstrom_general\Unit\Fixtures\TestContentEntityRepository;
+use Drupal\Tests\tengstrom_general\Unit\Fixtures\TestEntityRepository;
 use Drupal\Tests\UnitTestCase;
 use Ordermind\DrupalTengstromShared\Test\Fixtures\Entity\DummyEntity;
 use Ordermind\DrupalTengstromShared\Test\Fixtures\EntityStorage\ConfigEntityArrayStorage;
@@ -24,25 +23,18 @@ use Prophecy\PhpUnit\ProphecyTrait;
 class ImageElementBuilderTest extends UnitTestCase {
   use ProphecyTrait;
 
-  protected const CONTENT_REPOSITORY = 'content_repository';
-  protected const CONFIG_REPOSITORY = 'config_repository';
-
   protected TranslationManager $translator;
-  protected EntityType $entityType;
-  protected ContentEntityArrayStorage $contentEntityStorage;
-  protected ConfigEntityArrayStorage $configEntityStorage;
+  protected TestEntityRepository $repository;
+  protected FileSystemInterface $fileSystem;
 
   protected function setUp(): void {
     parent::setUp();
 
     $containerFactory = new TestServiceContainerFactory();
     $container = $containerFactory->createWithBasicServices();
-    \Drupal::setContainer($container);
 
-    $this->translator = $container->get('string_translation');
-
-    $this->entityType = new EntityType([
-      'id' => 'test_type',
+    $imageStyleType = new EntityType([
+      'id' => 'image_style',
       'class' => DummyEntity::class,
       'entity_keys' => [
         'id' => 'id',
@@ -50,30 +42,38 @@ class ImageElementBuilderTest extends UnitTestCase {
       ],
     ]);
 
-    $this->contentEntityStorage = ContentEntityArrayStorage::createInstance($container, $this->entityType);
-    $this->configEntityStorage = ConfigEntityArrayStorage::createInstance($container, $this->entityType);
-  }
+    $fileType = new EntityType([
+      'id' => 'file',
+      'class' => DummyEntity::class,
+      'entity_keys' => [
+        'id' => 'id',
+        'label' => 'label',
+      ],
+    ]);
 
-  protected function createBuilder(string $repositoryType): ImageElementBuilder {
+    $fileStorage = ContentEntityArrayStorage::createInstance($container, $fileType);
+    $imageStyleStorage = ConfigEntityArrayStorage::createInstance($container, $imageStyleType);
 
-    if (static::CONFIG_REPOSITORY === $repositoryType) {
-      $repository = new TestConfigEntityRepository($this->configEntityStorage);
-    }
-    else {
-      $repository = new TestContentEntityRepository($this->contentEntityStorage);
-    }
+    $mockEntityTypeManager = $this->prophesize(EntityTypeManagerInterface::class);
+    $mockEntityTypeManager->getStorage($imageStyleType->id())->willReturn($imageStyleStorage);
+    $mockEntityTypeManager->getDefinition($imageStyleType->id())->willReturn($imageStyleType);
+    $mockEntityTypeManager->getStorage($fileType->id())->willReturn($fileStorage);
+    $mockEntityTypeManager->getDefinition($fileType->id())->willReturn($fileType);
+    $entityTypeManager = $mockEntityTypeManager->reveal();
+    $container->set('entity_type.manager', $entityTypeManager);
+
+    \Drupal::setContainer($container);
+
+    $this->repository = new TestEntityRepository($entityTypeManager);
+    $this->translator = $container->get('string_translation');
 
     $mockFileSystem = $this->prophesize(FileSystemInterface::class);
     $mockFileSystem->prepareDirectory('valid_location', 0)->willReturn(TRUE);
     $mockFileSystem->prepareDirectory('invalid_location', 0)->willReturn(FALSE);
-    $fileSystem = $mockFileSystem->reveal();
+    $this->fileSystem = $mockFileSystem->reveal();
 
-    return new ImageElementBuilder(
-      $this->translator,
-      new ImageElementDefaultDescriptionFactory($this->translator),
-      $repository,
-      $fileSystem
-    );
+    $fileStorage->create()->save();
+    $imageStyleStorage->create(['id' => 'valid_style'])->save();
   }
 
   protected function getDefaultExpectedResult(): array {
@@ -96,13 +96,24 @@ class ImageElementBuilderTest extends UnitTestCase {
       ],
       '#title' => 'Test Field',
       '#theme' => 'image_widget',
-      '#preview_image_style' => 'config_thumbnail',
+      '#preview_image_style' => 'valid_style',
       '#weight' => -5,
     ];
   }
 
+  protected function createElementBuilder(): ImageElementBuilder {
+    return (new ImageElementBuilder(
+      $this->translator,
+      new ImageElementDefaultDescriptionFactory($this->translator),
+      $this->repository,
+      $this->fileSystem
+    ))
+      ->withLabel('Test Field')
+      ->withPreviewImageStyle('valid_style');
+  }
+
   public function testWithFileIdThrowsExceptionOnFileNotExist(): void {
-    $builder = $this->createBuilder(static::CONTENT_REPOSITORY);
+    $builder = $this->createElementBuilder();
 
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('The file id "5" does not exist in the database!');
@@ -110,7 +121,7 @@ class ImageElementBuilderTest extends UnitTestCase {
   }
 
   public function testWithUploadLocationThrowsExceptionOnInvalidUploadLocation(): void {
-    $builder = $this->createBuilder(static::CONTENT_REPOSITORY);
+    $builder = $this->createElementBuilder();
 
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('The upload location "invalid_location" does not exist or is not writable!');
@@ -118,7 +129,7 @@ class ImageElementBuilderTest extends UnitTestCase {
   }
 
   public function testWithAllowedExtensionsThrowsExceptionOnMissingAllowedExtensions(): void {
-    $builder = $this->createBuilder(static::CONTENT_REPOSITORY);
+    $builder = $this->createElementBuilder();
 
     $this->expectException(\DomainException::class);
     $this->expectExceptionMessage('Please supply at least one allowed extension.');
@@ -126,24 +137,45 @@ class ImageElementBuilderTest extends UnitTestCase {
   }
 
   public function testWithPreviewImageStyleThrowsExceptionOnInvalidImageStyle(): void {
-    $builder = $this->createBuilder(static::CONFIG_REPOSITORY);
+    $builder = $this->createElementBuilder();
 
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('The image style "invalid_style" does not exist in the database!');
     $builder->withPreviewImageStyle('invalid_style');
   }
 
-  public function testBuildThrowsExceptionOnMissingRequiredFields(): void {
+  public function testBuildThrowsExceptionOnMissingRequiredLabel(): void {
+    $builder = new ImageElementBuilder(
+      $this->translator,
+      new ImageElementDefaultDescriptionFactory($this->translator),
+      $this->repository,
+      $this->fileSystem
+    );
 
-    $builder = $this->createBuilder(static::CONTENT_REPOSITORY);
+    $builder->withPreviewImageStyle('valid_style');
 
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('The property "label" must be set before building the element.');
     $builder->build();
   }
 
-  public function testBuildWithOnlyLabel(): void {
-    $builder = $this->createBuilder(static::CONTENT_REPOSITORY)->withLabel('Test Field');
+  public function testBuildThrowsExceptionOnMissingRequiredImageStyle(): void {
+    $builder = new ImageElementBuilder(
+      $this->translator,
+      new ImageElementDefaultDescriptionFactory($this->translator),
+      $this->repository,
+      $this->fileSystem
+    );
+
+    $builder->withLabel('valid_style');
+
+    $this->expectException(\RuntimeException::class);
+    $this->expectExceptionMessage('The property "previewImageStyle" must be set before building the element.');
+    $builder->build();
+  }
+
+  public function testBuildWithBasicConfig(): void {
+    $builder = $this->createElementBuilder();
 
     $result = $builder->build();
     $expectedResult = $this->getDefaultExpectedResult();
@@ -155,7 +187,7 @@ class ImageElementBuilderTest extends UnitTestCase {
    * @dataProvider provideDescriptions
    */
   public function testBuildWithDescription(bool $useTranslation): void {
-    $builder = $this->createBuilder(static::CONTENT_REPOSITORY)->withLabel('Test Field');
+    $builder = $this->createElementBuilder();
 
     if ($useTranslation) {
       $description = $this->translator->translate('Test description');
@@ -181,7 +213,7 @@ class ImageElementBuilderTest extends UnitTestCase {
   }
 
   public function testBuildWithOptimalDimensions(): void {
-    $builder = $this->createBuilder(static::CONTENT_REPOSITORY)->withLabel('Test Field');
+    $builder = $this->createElementBuilder();
 
     $builder->withOptimalDimensions(UploadDimensions::fromArray(['width' => 35, 'height' => 78]));
     $result = $builder->build();
@@ -200,17 +232,7 @@ class ImageElementBuilderTest extends UnitTestCase {
   }
 
   public function testBuildWithFileId(): void {
-    $mockEntityTypeManager = $this->prophesize(EntityTypeManagerInterface::class);
-    $mockEntityTypeManager->getStorage($this->entityType->id())->willReturn($this->contentEntityStorage);
-    $mockEntityTypeManager->getDefinition($this->entityType->id())->willReturn($this->entityType);
-    $entityTypeManager = $mockEntityTypeManager->reveal();
-
-    $container = \Drupal::getContainer();
-    $container->set('entity_type.manager', $entityTypeManager);
-
-    $this->contentEntityStorage->create(['id' => 1])->save();
-
-    $builder = $this->createBuilder(static::CONTENT_REPOSITORY)->withLabel('Test Field');
+    $builder = $this->createElementBuilder();
 
     $builder->withFileId(1);
     $result = $builder->build();
@@ -221,7 +243,7 @@ class ImageElementBuilderTest extends UnitTestCase {
   }
 
   public function testBuildWithUploadLocation(): void {
-    $builder = $this->createBuilder(static::CONTENT_REPOSITORY)->withLabel('Test Field');
+    $builder = $this->createElementBuilder();
 
     $builder->withUploadLocation('valid_location');
     $result = $builder->build();
@@ -232,7 +254,7 @@ class ImageElementBuilderTest extends UnitTestCase {
   }
 
   public function testBuildWithAllowedExtensions(): void {
-    $builder = $this->createBuilder(static::CONTENT_REPOSITORY)->withLabel('Test Field');
+    $builder = $this->createElementBuilder();
 
     $builder->withAllowedExtensions(['gif']);
     $result = $builder->build();
@@ -250,7 +272,7 @@ class ImageElementBuilderTest extends UnitTestCase {
   }
 
   public function testBuildWithMaxSize(): void {
-    $builder = $this->createBuilder(static::CONTENT_REPOSITORY)->withLabel('Test Field');
+    $builder = $this->createElementBuilder();
 
     $builder->withMaxSize(new FileSize('50 KB'));
     $result = $builder->build();
@@ -268,17 +290,7 @@ class ImageElementBuilderTest extends UnitTestCase {
   }
 
   public function testBuildWithPreviewImageStyle(): void {
-    $mockEntityTypeManager = $this->prophesize(EntityTypeManagerInterface::class);
-    $mockEntityTypeManager->getStorage($this->entityType->id())->willReturn($this->configEntityStorage);
-    $mockEntityTypeManager->getDefinition($this->entityType->id())->willReturn($this->entityType);
-    $entityTypeManager = $mockEntityTypeManager->reveal();
-
-    $container = \Drupal::getContainer();
-    $container->set('entity_type.manager', $entityTypeManager);
-
-    $this->configEntityStorage->create(['id' => 'valid_style'])->save();
-
-    $builder = $this->createBuilder(static::CONFIG_REPOSITORY)->withLabel('Test Field');
+    $builder = $this->createElementBuilder();
 
     $builder->withPreviewImageStyle('valid_style');
     $result = $builder->build();
