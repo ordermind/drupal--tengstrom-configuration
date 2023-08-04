@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\tengstrom_config_favicon\HookHandlers\FormAlterHandlers;
 
+use ChrisUllyott\FileSize;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -60,7 +61,8 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
     $this->elementBuilder
       ->withLabel($this->translator->translate('Favicon'))
       ->withPreviewImageStyle('config_thumbnail')
-      ->withOptimalDimensions($this->uploadDimensions);
+      ->withOptimalDimensions($this->uploadDimensions)
+      ->withMaxSize(new FileSize('1 KB'));
 
     if ($fileId = $this->getFileIdFromUuid($config->get('uuid'))) {
       $this->elementBuilder->withFileId($fileId);

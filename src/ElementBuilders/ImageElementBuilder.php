@@ -22,8 +22,8 @@ class ImageElementBuilder {
   protected EntityRepositoryInterface $entityRepository;
   protected FileSystemInterface $fileSystem;
 
-  protected string|TranslatableMarkup|NULL $label = NULL;
-  protected string|TranslatableMarkup|NULL $description = NULL;
+  protected TranslatableMarkup|string|NULL $label = NULL;
+  protected TranslatableMarkup|string|NULL $description = NULL;
   protected ?UploadDimensions $optimalDimensions = NULL;
   protected ?int $fileId = NULL;
   protected string $uploadLocation = 'public://';
@@ -63,7 +63,7 @@ class ImageElementBuilder {
   }
 
   protected function getDefaultMaxSize(): FileSize {
-    return new FileSize('2 MB');
+    return new FileSize('100 KB');
   }
 
   protected function getMaxSize(): FileSize {
