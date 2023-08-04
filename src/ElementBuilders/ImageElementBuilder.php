@@ -9,7 +9,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\tengstrom_configuration\Factories\ImageElementDefaultDescriptionFactory;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
-use Twig\Error\RuntimeError;
+use Drupal\tengstrom_general\Repository\EntityRepositoryInterface;
 
 /**
  * Use this class to create an image upload element in a type safe way that can
@@ -18,6 +18,7 @@ use Twig\Error\RuntimeError;
 class ImageElementBuilder {
   protected TranslationInterface $translator;
   protected ImageElementDefaultDescriptionFactory $defaultDescriptionFactory;
+  protected EntityRepositoryInterface $fileRepository;
 
   protected string|TranslatableMarkup|NULL $label = NULL;
   protected string|TranslatableMarkup|NULL $description = NULL;
@@ -33,9 +34,14 @@ class ImageElementBuilder {
     'label',
   ];
 
-  public function __construct(TranslationInterface $translator, ImageElementDefaultDescriptionFactory $defaultDescriptionFactory) {
+  public function __construct(
+    TranslationInterface $translator,
+    ImageElementDefaultDescriptionFactory $defaultDescriptionFactory,
+    EntityRepositoryInterface $fileRepository
+  ) {
     $this->translator = $translator;
     $this->defaultDescriptionFactory = $defaultDescriptionFactory;
+    $this->fileRepository = $fileRepository;
   }
 
   protected function getDescription(): string|TranslatableMarkup {
@@ -77,6 +83,10 @@ class ImageElementBuilder {
   }
 
   public function withFileId(int $fileId): static {
+    if (!$this->fileRepository->hasEntityIdForType('file', $fileId)) {
+      throw new \RuntimeException("The file id \"{$fileId}\" does not exist in the database!");
+    }
+
     $this->fileId = $fileId;
 
     return $this;
@@ -93,7 +103,7 @@ class ImageElementBuilder {
    */
   public function withAllowedExtensions(array $allowedExtensions): static {
     if (!$allowedExtensions) {
-      throw new \InvalidArgumentException('Please supply at least one allowed extension.');
+      throw new \DomainException('Please supply at least one allowed extension.');
     }
 
     $this->allowedExtensions = $allowedExtensions;
@@ -116,7 +126,7 @@ class ImageElementBuilder {
   public function build(): array {
     foreach (static::REQUIRED_PROPERTIES as $propertyName) {
       if (!isset($this->{$propertyName})) {
-        throw new RuntimeError("The property \"{$propertyName}\" must be set before building the element.");
+        throw new \RuntimeException("The property \"{$propertyName}\" must be set before building the element.");
       }
     }
 

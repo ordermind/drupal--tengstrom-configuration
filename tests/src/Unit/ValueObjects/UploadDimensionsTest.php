@@ -42,8 +42,8 @@ class UploadDimensionsTest extends UnitTestCase {
     $values = ['width' => 20, 'height' => 40];
 
     $dimensions = UploadDimensions::fromArray($values);
-    $this->assertSame($values['width'], $dimensions->getWidth());
-    $this->assertSame($values['height'], $dimensions->getHeight());
+    $this->assertSame($values['width'], $dimensions->getWidth()->getValue());
+    $this->assertSame($values['height'], $dimensions->getHeight()->getValue());
   }
 
 }

@@ -23,7 +23,7 @@ class UploadDimensions {
       throw new \InvalidArgumentException('Height is required in upload dimensions');
     }
 
-    return new static($values['width'], $values['height']);
+    return new static(new PositiveInteger((int) $values['width']), new PositiveInteger((int) $values['height']));
   }
 
   public function getWidth(): PositiveInteger {
