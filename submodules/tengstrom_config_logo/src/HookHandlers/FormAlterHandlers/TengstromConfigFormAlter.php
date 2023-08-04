@@ -12,7 +12,8 @@ use Drupal\Core\Extension\ThemeHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\tengstrom_configuration\Concerns\UploadsFiles;
-use Drupal\tengstrom_configuration\ElementBuilders\ImageElementBuilder;
+use Drupal\tengstrom_configuration\Factories\ImageElementFactory;
+use Drupal\tengstrom_configuration\ValueObjects\ImageElementOptions;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
 use Ordermind\DrupalTengstromShared\HookHandlers\FormAlterHandlerInterface;
 
@@ -21,7 +22,7 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   use DependencySerializationTrait;
 
   protected ConfigFactoryInterface $configFactory;
-  protected ImageElementBuilder $elementBuilder;
+  protected ImageElementFactory $elementFactory;
   protected EntityStorageInterface $fileStorage;
   protected ThemeHandlerInterface $themeHandler;
   protected TranslationInterface $translator;
@@ -29,7 +30,7 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
 
   public function __construct(
     ConfigFactoryInterface $configFactory,
-    ImageElementBuilder $elementBuilder,
+    ImageElementFactory $elementFactory,
     EntityTypeManagerInterface $entityTypeManager,
     ThemeHandlerInterface $themeHandler,
     TranslationInterface $translator,
@@ -42,7 +43,7 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
     }
 
     $this->configFactory = $configFactory;
-    $this->elementBuilder = $elementBuilder;
+    $this->elementFactory = $elementFactory;
     $this->fileStorage = $entityTypeManager->getStorage('file');
     $this->themeHandler = $themeHandler;
     $this->translator = $translator;
@@ -52,17 +53,15 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   public function alter(array &$form, FormStateInterface $formState, string $formId): void {
     $config = $this->configFactory->get('tengstrom_config_logo.settings');
 
-    $this->elementBuilder
-      ->withLabel($this->translator->translate('Logo'))
-      ->withPreviewImageStyle('config_thumbnail')
-      ->withOptimalDimensions($this->uploadDimensions)
-      ->withWeight(-10);
+    $options = new ImageElementOptions(
+      label: $this->translator->translate('Logo'),
+      previewImageStyle: 'config_thumbnail',
+      fileId: $this->getFileIdFromUuid($config->get('uuid')) ?? NULL,
+      optimalDimensions: $this->uploadDimensions,
+      weight: -10
+    );
 
-    if ($fileId = $this->getFileIdFromUuid($config->get('uuid'))) {
-      $this->elementBuilder->withFileId($fileId);
-    }
-
-    $form['logo'] = $this->elementBuilder->build();
+    $form['logo'] = $this->elementFactory->create($options);
     $form['#submit'][] = [$this, 'submit'];
   }
 

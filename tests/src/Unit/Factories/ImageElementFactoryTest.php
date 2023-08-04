@@ -2,15 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Drupal\Tests\tengstrom_configuration\ElementBuilders;
+namespace Drupal\Tests\tengstrom_configuration\ElementFactorys;
 
-use ChrisUllyott\FileSize;
 use Drupal\Core\Entity\EntityType;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\TranslationManager;
-use Drupal\tengstrom_configuration\ElementBuilders\ImageElementBuilder;
-use Drupal\tengstrom_configuration\Factories\ImageElementDefaultDescriptionFactory;
+use Drupal\tengstrom_configuration\Factories\ImageElementFactory;
+use Drupal\tengstrom_configuration\ValueObjects\ImageElementOptions;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
 use Drupal\Tests\tengstrom_general\Unit\Fixtures\TestEntityRepository;
 use Drupal\Tests\UnitTestCase;
@@ -20,12 +19,12 @@ use Ordermind\DrupalTengstromShared\Test\Fixtures\EntityStorage\ContentEntityArr
 use Ordermind\DrupalTengstromShared\Test\Fixtures\Factories\TestServiceContainerFactory;
 use Prophecy\PhpUnit\ProphecyTrait;
 
-class ImageElementBuilderTest extends UnitTestCase {
+class ImageElementFactoryTest extends UnitTestCase {
   use ProphecyTrait;
 
   protected TranslationManager $translator;
-  protected TestEntityRepository $repository;
   protected FileSystemInterface $fileSystem;
+  protected ImageElementFactory $factory;
 
   protected function setUp(): void {
     parent::setUp();
@@ -64,13 +63,17 @@ class ImageElementBuilderTest extends UnitTestCase {
 
     \Drupal::setContainer($container);
 
-    $this->repository = new TestEntityRepository($entityTypeManager);
-    $this->translator = $container->get('string_translation');
-
     $mockFileSystem = $this->prophesize(FileSystemInterface::class);
-    $mockFileSystem->prepareDirectory('valid_location', 0)->willReturn(TRUE);
+    $mockFileSystem->prepareDirectory('public://', 0)->willReturn(TRUE);
     $mockFileSystem->prepareDirectory('invalid_location', 0)->willReturn(FALSE);
     $this->fileSystem = $mockFileSystem->reveal();
+
+    $this->translator = $container->get('string_translation');
+    $this->factory = new ImageElementFactory(
+      $this->translator,
+      new TestEntityRepository($entityTypeManager),
+      $this->fileSystem
+    );
 
     $fileStorage->create()->save();
     $imageStyleStorage->create(['id' => 'valid_style'])->save();
@@ -86,13 +89,13 @@ class ImageElementBuilderTest extends UnitTestCase {
         'Allowed extensions: @extensions<br />Max size: @size',
         [
           '@extensions' => 'gif png jpg jpeg webp',
-          '@size' => '2 MB',
+          '@size' => '200 KB',
         ],
       ),
       '#upload_validators' => [
         'file_validate_is_image' => [],
         'file_validate_extensions' => ['gif png jpg jpeg webp'],
-        'file_validate_size' => [2097152],
+        'file_validate_size' => [204800],
       ],
       '#title' => 'Test Field',
       '#theme' => 'image_widget',
@@ -101,83 +104,34 @@ class ImageElementBuilderTest extends UnitTestCase {
     ];
   }
 
-  protected function createElementBuilder(): ImageElementBuilder {
-    return (new ImageElementBuilder(
-      $this->translator,
-      new ImageElementDefaultDescriptionFactory($this->translator),
-      $this->repository,
-      $this->fileSystem
-    ))
-      ->withLabel('Test Field')
-      ->withPreviewImageStyle('valid_style');
-  }
-
-  public function testWithFileIdThrowsExceptionOnFileNotExist(): void {
-    $builder = $this->createElementBuilder();
+  public function testCreateThrowsExceptionOnFileNotExist(): void {
+    $options = new ImageElementOptions('Test Field', 'valid_style', fileId: 5);
 
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('The file id "5" does not exist in the database!');
-    $builder->withFileId(5);
+    $this->factory->create($options);
   }
 
-  public function testWithUploadLocationThrowsExceptionOnInvalidUploadLocation(): void {
-    $builder = $this->createElementBuilder();
+  public function testCreateThrowsExceptionOnInvalidUploadLocation(): void {
+    $options = new ImageElementOptions('Test Field', 'valid_style', uploadLocation: 'invalid_location');
 
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('The upload location "invalid_location" does not exist or is not writable!');
-    $builder->withUploadLocation('invalid_location');
+    $this->factory->create($options);
   }
 
-  public function testWithAllowedExtensionsThrowsExceptionOnMissingAllowedExtensions(): void {
-    $builder = $this->createElementBuilder();
-
-    $this->expectException(\DomainException::class);
-    $this->expectExceptionMessage('Please supply at least one allowed extension.');
-    $builder->withAllowedExtensions([]);
-  }
-
-  public function testWithPreviewImageStyleThrowsExceptionOnInvalidImageStyle(): void {
-    $builder = $this->createElementBuilder();
+  public function testCreateThrowsExceptionOnInvalidImageStyle(): void {
+    $options = new ImageElementOptions('Test Field', 'invalid_style');
 
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('The image style "invalid_style" does not exist in the database!');
-    $builder->withPreviewImageStyle('invalid_style');
+    $this->factory->create($options);
   }
 
-  public function testBuildThrowsExceptionOnMissingRequiredLabel(): void {
-    $builder = new ImageElementBuilder(
-      $this->translator,
-      new ImageElementDefaultDescriptionFactory($this->translator),
-      $this->repository,
-      $this->fileSystem
-    );
+  public function testCreateWithBasicConfig(): void {
+    $options = new ImageElementOptions('Test Field', 'valid_style');
 
-    $builder->withPreviewImageStyle('valid_style');
-
-    $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage('The property "label" must be set before building the element.');
-    $builder->build();
-  }
-
-  public function testBuildThrowsExceptionOnMissingRequiredImageStyle(): void {
-    $builder = new ImageElementBuilder(
-      $this->translator,
-      new ImageElementDefaultDescriptionFactory($this->translator),
-      $this->repository,
-      $this->fileSystem
-    );
-
-    $builder->withLabel('valid_style');
-
-    $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage('The property "previewImageStyle" must be set before building the element.');
-    $builder->build();
-  }
-
-  public function testBuildWithBasicConfig(): void {
-    $builder = $this->createElementBuilder();
-
-    $result = $builder->build();
+    $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
 
     $this->assertEquals($expectedResult, $result);
@@ -186,9 +140,7 @@ class ImageElementBuilderTest extends UnitTestCase {
   /**
    * @dataProvider provideDescriptions
    */
-  public function testBuildWithDescription(bool $useTranslation): void {
-    $builder = $this->createElementBuilder();
-
+  public function testCreateWithDescription(bool $useTranslation): void {
     if ($useTranslation) {
       $description = $this->translator->translate('Test description');
     }
@@ -196,9 +148,9 @@ class ImageElementBuilderTest extends UnitTestCase {
       $description = 'Test description';
     }
 
-    $builder->withDescription($description);
+    $options = new ImageElementOptions('Test Field', 'valid_style', descriptionOverride: $description);
 
-    $result = $builder->build();
+    $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
     $expectedResult['#description'] = $description;
 
@@ -212,17 +164,16 @@ class ImageElementBuilderTest extends UnitTestCase {
     ];
   }
 
-  public function testBuildWithOptimalDimensions(): void {
-    $builder = $this->createElementBuilder();
+  public function testCreateWithOptimalDimensions(): void {
+    $options = new ImageElementOptions('Test Field', 'valid_style', optimalDimensions: UploadDimensions::fromArray(['width' => 35, 'height' => 78]));
 
-    $builder->withOptimalDimensions(UploadDimensions::fromArray(['width' => 35, 'height' => 78]));
-    $result = $builder->build();
+    $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
     $expectedResult['#description'] = $this->translator->translate(
       'Allowed extensions: @extensions<br />Optimal dimensions: @widthpx x @heightpx<br />Max size: @size',
       [
         '@extensions' => 'gif png jpg jpeg webp',
-        '@size' => '2 MB',
+        '@size' => '200 KB',
         '@width' => 35,
         '@height' => 78,
       ],
@@ -231,39 +182,36 @@ class ImageElementBuilderTest extends UnitTestCase {
     $this->assertEquals($expectedResult, $result);
   }
 
-  public function testBuildWithFileId(): void {
-    $builder = $this->createElementBuilder();
+  public function testCreateWithFileId(): void {
+    $options = new ImageElementOptions('Test Field', 'valid_style', fileId: 1);
 
-    $builder->withFileId(1);
-    $result = $builder->build();
+    $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
     $expectedResult['#default_value'] = [1];
 
     $this->assertEquals($expectedResult, $result);
   }
 
-  public function testBuildWithUploadLocation(): void {
-    $builder = $this->createElementBuilder();
+  public function testCreateWithUploadLocation(): void {
+    $options = new ImageElementOptions('Test Field', 'valid_style', uploadLocation: 'public://');
 
-    $builder->withUploadLocation('valid_location');
-    $result = $builder->build();
+    $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
-    $expectedResult['#upload_location'] = 'valid_location';
+    $expectedResult['#upload_location'] = 'public://';
 
     $this->assertEquals($expectedResult, $result);
   }
 
-  public function testBuildWithAllowedExtensions(): void {
-    $builder = $this->createElementBuilder();
+  public function testCreateWithAllowedExtensions(): void {
+    $options = new ImageElementOptions('Test Field', 'valid_style', allowedExtensions: ['gif']);
 
-    $builder->withAllowedExtensions(['gif']);
-    $result = $builder->build();
+    $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
     $expectedResult['#description'] = $this->translator->translate(
       'Allowed extensions: @extensions<br />Max size: @size',
       [
         '@extensions' => 'gif',
-        '@size' => '2 MB',
+        '@size' => '200 KB',
       ],
     );
     $expectedResult['#upload_validators']['file_validate_extensions'] = ['gif'];
@@ -271,11 +219,10 @@ class ImageElementBuilderTest extends UnitTestCase {
     $this->assertEquals($expectedResult, $result);
   }
 
-  public function testBuildWithMaxSize(): void {
-    $builder = $this->createElementBuilder();
+  public function testCreateWithMaxSize(): void {
+    $options = new ImageElementOptions('Test Field', 'valid_style', maxSize: '50 KB');
 
-    $builder->withMaxSize(new FileSize('50 KB'));
-    $result = $builder->build();
+    $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
     $expectedResult['#description'] = $this->translator->translate(
       'Allowed extensions: @extensions<br />Max size: @size',
@@ -289,11 +236,10 @@ class ImageElementBuilderTest extends UnitTestCase {
     $this->assertEquals($expectedResult, $result);
   }
 
-  public function testBuilderWithWeight(): void {
-    $builder = $this->createElementBuilder();
+  public function testCreateWithWeight(): void {
+    $options = new ImageElementOptions('Test Field', 'valid_style', weight: -5);
 
-    $builder->withWeight(-5);
-    $result = $builder->build();
+    $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
     $expectedResult['#weight'] = -5;
 

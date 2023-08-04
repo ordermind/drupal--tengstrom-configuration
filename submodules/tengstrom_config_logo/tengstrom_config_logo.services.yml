@@ -4,7 +4,7 @@ services:
     class: Drupal\tengstrom_config_logo\HookHandlers\FormAlterHandlers\TengstromConfigFormAlter
     arguments:
       - '@config.factory'
-      - '@tengstrom_configuration.image_element_builder'
+      - '@tengstrom_configuration.image_element_factory'
       - '@entity_type.manager'
       - '@theme_handler'
       - '@string_translation'

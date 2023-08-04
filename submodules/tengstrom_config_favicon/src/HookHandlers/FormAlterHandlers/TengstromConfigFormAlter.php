@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\tengstrom_config_favicon\HookHandlers\FormAlterHandlers;
 
-use ChrisUllyott\FileSize;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -15,7 +14,8 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\tengstrom_configuration\Concerns\UploadsFiles;
-use Drupal\tengstrom_configuration\ElementBuilders\ImageElementBuilder;
+use Drupal\tengstrom_configuration\Factories\ImageElementFactory;
+use Drupal\tengstrom_configuration\ValueObjects\ImageElementOptions;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
 use Ordermind\DrupalTengstromShared\HookHandlers\FormAlterHandlerInterface;
 
@@ -24,7 +24,7 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   use DependencySerializationTrait;
 
   protected ConfigFactoryInterface $configFactory;
-  protected ImageElementBuilder $elementBuilder;
+  protected ImageElementFactory $elementFactory;
   protected EntityStorageInterface $fileStorage;
   protected FileRepositoryInterface $fileRepository;
   protected ThemeHandlerInterface $themeHandler;
@@ -33,7 +33,7 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
 
   public function __construct(
     ConfigFactoryInterface $configFactory,
-    ImageElementBuilder $elementBuilder,
+    ImageElementFactory $elementFactory,
     EntityTypeManagerInterface $entityTypeManager,
     FileRepositoryInterface $fileRepository,
     ThemeHandlerInterface $themeHandler,
@@ -47,7 +47,7 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
     }
 
     $this->configFactory = $configFactory;
-    $this->elementBuilder = $elementBuilder;
+    $this->elementFactory = $elementFactory;
     $this->fileStorage = $entityTypeManager->getStorage('file');
     $this->fileRepository = $fileRepository;
     $this->themeHandler = $themeHandler;
@@ -58,17 +58,15 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   public function alter(array &$form, FormStateInterface $formState, string $formId): void {
     $config = $this->configFactory->get('tengstrom_config_favicon.settings');
 
-    $this->elementBuilder
-      ->withLabel($this->translator->translate('Favicon'))
-      ->withPreviewImageStyle('config_thumbnail')
-      ->withOptimalDimensions($this->uploadDimensions)
-      ->withMaxSize(new FileSize('1 KB'));
+    $options = new ImageElementOptions(
+      label: $this->translator->translate('Favicon'),
+      previewImageStyle: 'config_thumbnail',
+      fileId: $this->getFileIdFromUuid($config->get('uuid')) ?? NULL,
+      optimalDimensions: $this->uploadDimensions,
+      maxSize: '1 KB'
+    );
 
-    if ($fileId = $this->getFileIdFromUuid($config->get('uuid'))) {
-      $this->elementBuilder->withFileId($fileId);
-    }
-
-    $form['favicon'] = $this->elementBuilder->build();
+    $form['favicon'] = $this->elementFactory->create($options);
     $form['#submit'][] = [$this, 'submit'];
   }
 

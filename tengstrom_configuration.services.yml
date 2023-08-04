@@ -4,16 +4,9 @@ services:
     class: Drupal\tengstrom_configuration\HookHandlers\PreprocessHandlers\PreprocessImageWidgetHandler
 
   # Other services
-  tengstrom_configuration.image_element_description_factory:
-    class: Drupal\tengstrom_configuration\Factories\ImageElementDefaultDescriptionFactory
+  tengstrom_configuration.image_element_factory:
+    class: Drupal\tengstrom_configuration\Factories\ImageElementFactory
     arguments:
       - '@string_translation'
-
-  tengstrom_configuration.image_element_builder:
-    class: Drupal\tengstrom_configuration\ElementBuilders\ImageElementBuilder
-    arguments:
-      - '@string_translation'
-      - '@tengstrom_configuration.image_element_description_factory'
       - '@tengstrom_general.entity_repository'
       - '@file_system'
-    scope: prototype

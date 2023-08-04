@@ -1,0 +1,89 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Drupal\tengstrom_configuration\Factories;
+
+use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\tengstrom_configuration\ValueObjects\ImageElementOptions;
+use Drupal\tengstrom_general\Repository\EntityRepositoryInterface;
+
+class ImageElementFactory {
+  protected TranslationInterface $translator;
+  protected EntityRepositoryInterface $entityRepository;
+  protected FileSystemInterface $fileSystem;
+
+  public function __construct(
+    TranslationInterface $translator,
+    EntityRepositoryInterface $entityRepository,
+    FileSystemInterface $fileSystem
+  ) {
+    $this->translator = $translator;
+    $this->entityRepository = $entityRepository;
+    $this->fileSystem = $fileSystem;
+  }
+
+  public function create(ImageElementOptions $options): array {
+    $this->validate($options);
+
+    return [
+      '#type'                 => 'managed_file',
+      '#upload_location'      => $options->getUploadLocation(),
+      '#default_value' => array_filter(
+        [$options->getFileId()]
+      ),
+      '#multiple'             => FALSE,
+      '#description'          => $this->createDescription($options),
+      '#upload_validators'    => [
+        'file_validate_is_image'      => [],
+        'file_validate_extensions'    => [implode(' ', $options->getAllowedExtensions())],
+        'file_validate_size'          => [$options->getMaxSize()->as('B')],
+      ],
+      '#title'                => $options->getLabel(),
+      '#theme' => 'image_widget',
+      '#preview_image_style' => $options->getPreviewImageStyle(),
+      '#weight' => $options->getWeight(),
+    ];
+  }
+
+  protected function validate(ImageElementOptions $options): void {
+    $fileId = $options->getFileId();
+    if ($fileId && !$this->entityRepository->hasEntityIdForType('file', $fileId)) {
+      throw new \RuntimeException("The file id \"{$fileId}\" does not exist in the database!");
+    }
+
+    $uploadLocation = $options->getUploadLocation();
+    if (!$this->fileSystem->prepareDirectory($uploadLocation, 0)) {
+      throw new \RuntimeException("The upload location \"{$uploadLocation}\" does not exist or is not writable!");
+    }
+
+    $imageStyle = $options->getPreviewImageStyle();
+    if (!$this->entityRepository->hasEntityIdForType('image_style', $imageStyle)) {
+      throw new \RuntimeException("The image style \"{$imageStyle}\" does not exist in the database!");
+    }
+  }
+
+  protected function createDescription(ImageElementOptions $options): TranslatableMarkup|string {
+    if ($options->getDescriptionOverride() !== NULL) {
+      return $options->getDescriptionOverride();
+    }
+
+    $translationArguments = [
+      '@extensions' => implode(' ', $options->getAllowedExtensions()),
+      '@size' => $options->getMaxSize()->asAuto(),
+    ];
+
+    $translationString = 'Allowed extensions: @extensions';
+    if ($optimalDimensions = $options->getOptimalDimensions()) {
+      $translationString .= '<br />Optimal dimensions: @widthpx x @heightpx';
+      $translationArguments['@width'] = $optimalDimensions->getWidth()->getValue();
+      $translationArguments['@height'] = $optimalDimensions->getHeight()->getValue();
+    }
+    $translationString .= '<br />Max size: @size';
+
+    return $this->translator->translate($translationString, $translationArguments);
+  }
+
+}
