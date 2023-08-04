@@ -14,6 +14,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\tengstrom_configuration\Concerns\UploadsFiles;
+use Drupal\tengstrom_configuration\ElementBuilders\ImageElementBuilder;
 use Drupal\tengstrom_configuration\ValueObjects\UploadDimensions;
 use Ordermind\DrupalTengstromShared\HookHandlers\FormAlterHandlerInterface;
 
@@ -21,11 +22,9 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   use UploadsFiles;
   use DependencySerializationTrait;
 
-  protected const DEFAULT_PREVIEW_IMAGE_STYLE = 'original';
-
   protected ConfigFactoryInterface $configFactory;
+  protected ImageElementBuilder $elementBuilder;
   protected EntityStorageInterface $fileStorage;
-  protected EntityStorageInterface $imageStyleStorage;
   protected FileRepositoryInterface $fileRepository;
   protected ThemeHandlerInterface $themeHandler;
   protected TranslationInterface $translator;
@@ -33,6 +32,7 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
 
   public function __construct(
     ConfigFactoryInterface $configFactory,
+    ImageElementBuilder $elementBuilder,
     EntityTypeManagerInterface $entityTypeManager,
     FileRepositoryInterface $fileRepository,
     ThemeHandlerInterface $themeHandler,
@@ -46,8 +46,8 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
     }
 
     $this->configFactory = $configFactory;
+    $this->elementBuilder = $elementBuilder;
     $this->fileStorage = $entityTypeManager->getStorage('file');
-    $this->imageStyleStorage = $entityTypeManager->getStorage('image_style');
     $this->fileRepository = $fileRepository;
     $this->themeHandler = $themeHandler;
     $this->translator = $translator;
@@ -55,38 +55,18 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   }
 
   public function alter(array &$form, FormStateInterface $formState, string $formId): void {
-    if (!$this->imageStyleStorage->load($this->getPreviewImageStyle())) {
-      throw new \RuntimeException('The image style "' . $this->getPreviewImageStyle() . '" is missing!');
-    }
-
     $config = $this->configFactory->get('tengstrom_config_favicon.settings');
 
-    $form['favicon'] = [
-      '#type'                 => 'managed_file',
-      '#upload_location'      => 'public://',
-      '#default_value' => array_filter(
-        [$this->getFileIdFromUuid($config->get('uuid'))]
-      ),
-      '#multiple'             => FALSE,
-      '#description'          => $this->translator->translate(
-        'Allowed extensions: @extensions<br />Optimal dimensions: @widthpx x @heightpx',
-        [
-          '@extensions' => 'gif png jpg jpeg webp',
-          '@width' => $this->uploadDimensions->getWidth(),
-          '@height' => $this->uploadDimensions->getHeight(),
-        ]
-      ),
-      '#upload_validators'    => [
-        'file_validate_is_image'      => [],
-        'file_validate_extensions'    => ['gif png jpg jpeg webp'],
-        'file_validate_size'          => [25600000],
-      ],
-      '#title'                => $this->translator->translate('Favicon'),
-      '#theme' => 'image_widget',
-      '#preview_image_style' => $this->getPreviewImageStyle(),
-      '#weight' => 0,
-    ];
+    $this->elementBuilder
+      ->withLabel($this->translator->translate('Favicon'))
+      ->withPreviewImageStyle('config_thumbnail')
+      ->withOptimalDimensions($this->uploadDimensions);
 
+    if ($fileId = $this->getFileIdFromUuid($config->get('uuid'))) {
+      $this->elementBuilder->withFileId($fileId);
+    }
+
+    $form['favicon'] = $this->elementBuilder->build();
     $form['#submit'][] = [$this, 'submit'];
   }
 
@@ -128,10 +108,6 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   protected function getFileStorage(): EntityStorageInterface {
     return $this->fileStorage;
 
-  }
-
-  protected function getPreviewImageStyle(): string {
-    return static::DEFAULT_PREVIEW_IMAGE_STYLE;
   }
 
 }

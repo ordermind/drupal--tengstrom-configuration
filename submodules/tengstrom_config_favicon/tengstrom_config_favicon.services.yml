@@ -4,6 +4,7 @@ services:
     class: Drupal\tengstrom_config_favicon\HookHandlers\FormAlterHandlers\TengstromConfigFormAlter
     arguments:
       - '@config.factory'
+      - '@tengstrom_configuration.image_element_builder'
       - '@entity_type.manager'
       - '@file.repository'
       - '@theme_handler'

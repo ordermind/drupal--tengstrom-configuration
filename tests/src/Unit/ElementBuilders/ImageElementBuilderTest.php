@@ -91,13 +91,13 @@ class ImageElementBuilderTest extends UnitTestCase {
       ),
       '#upload_validators' => [
         'file_validate_is_image' => [],
-        'file_validate_extensions' => 'gif png jpg jpeg webp',
+        'file_validate_extensions' => ['gif png jpg jpeg webp'],
         'file_validate_size' => [2097152],
       ],
       '#title' => 'Test Field',
       '#theme' => 'image_widget',
       '#preview_image_style' => 'valid_style',
-      '#weight' => -5,
+      '#weight' => 0,
     ];
   }
 
@@ -266,7 +266,7 @@ class ImageElementBuilderTest extends UnitTestCase {
         '@size' => '2 MB',
       ],
     );
-    $expectedResult['#upload_validators']['file_validate_extensions'] = 'gif';
+    $expectedResult['#upload_validators']['file_validate_extensions'] = ['gif'];
 
     $this->assertEquals($expectedResult, $result);
   }
@@ -289,13 +289,13 @@ class ImageElementBuilderTest extends UnitTestCase {
     $this->assertEquals($expectedResult, $result);
   }
 
-  public function testBuildWithPreviewImageStyle(): void {
+  public function testBuilderWithWeight(): void {
     $builder = $this->createElementBuilder();
 
-    $builder->withPreviewImageStyle('valid_style');
+    $builder->withWeight(-5);
     $result = $builder->build();
     $expectedResult = $this->getDefaultExpectedResult();
-    $expectedResult['#preview_image_style'] = 'valid_style';
+    $expectedResult['#weight'] = -5;
 
     $this->assertEquals($expectedResult, $result);
   }

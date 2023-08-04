@@ -31,6 +31,7 @@ class ImageElementBuilder {
   protected array $allowedExtensions = ['gif', 'png', 'jpg', 'jpeg', 'webp'];
   protected ?FileSize $maxSize;
   protected ?string $previewImageStyle = NULL;
+  protected int $weight = 0;
 
   protected const REQUIRED_PROPERTIES = [
     'label',
@@ -136,6 +137,12 @@ class ImageElementBuilder {
     return $this;
   }
 
+  public function withWeight(int $weight): static {
+    $this->weight = $weight;
+
+    return $this;
+  }
+
   public function build(): array {
     foreach (static::REQUIRED_PROPERTIES as $propertyName) {
       if (!isset($this->{$propertyName})) {
@@ -153,13 +160,13 @@ class ImageElementBuilder {
       '#description'          => $this->getDescription(),
       '#upload_validators'    => [
         'file_validate_is_image'      => [],
-        'file_validate_extensions'    => implode(' ', $this->allowedExtensions),
+        'file_validate_extensions'    => [implode(' ', $this->allowedExtensions)],
         'file_validate_size'          => [$this->getMaxSize()->as('B')],
       ],
       '#title'                => $this->label,
       '#theme' => 'image_widget',
       '#preview_image_style' => $this->previewImageStyle,
-      '#weight' => -5,
+      '#weight' => $this->weight,
     ];
   }
 
