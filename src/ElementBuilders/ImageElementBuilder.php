@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\tengstrom_configuration\ElementBuilders;
 
 use ChrisUllyott\FileSize;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\tengstrom_configuration\Factories\ImageElementDefaultDescriptionFactory;
@@ -18,7 +19,8 @@ use Drupal\tengstrom_general\Repository\EntityRepositoryInterface;
 class ImageElementBuilder {
   protected TranslationInterface $translator;
   protected ImageElementDefaultDescriptionFactory $defaultDescriptionFactory;
-  protected EntityRepositoryInterface $fileRepository;
+  protected EntityRepositoryInterface $entityRepository;
+  protected FileSystemInterface $fileSystem;
 
   protected string|TranslatableMarkup|NULL $label = NULL;
   protected string|TranslatableMarkup|NULL $description = NULL;
@@ -37,11 +39,13 @@ class ImageElementBuilder {
   public function __construct(
     TranslationInterface $translator,
     ImageElementDefaultDescriptionFactory $defaultDescriptionFactory,
-    EntityRepositoryInterface $fileRepository
+    EntityRepositoryInterface $entityRepository,
+    FileSystemInterface $fileSystem
   ) {
     $this->translator = $translator;
     $this->defaultDescriptionFactory = $defaultDescriptionFactory;
-    $this->fileRepository = $fileRepository;
+    $this->entityRepository = $entityRepository;
+    $this->fileSystem = $fileSystem;
   }
 
   protected function getDescription(): string|TranslatableMarkup {
@@ -83,7 +87,7 @@ class ImageElementBuilder {
   }
 
   public function withFileId(int $fileId): static {
-    if (!$this->fileRepository->hasEntityIdForType('file', $fileId)) {
+    if (!$this->entityRepository->hasEntityIdForType('file', $fileId)) {
       throw new \RuntimeException("The file id \"{$fileId}\" does not exist in the database!");
     }
 
@@ -93,6 +97,10 @@ class ImageElementBuilder {
   }
 
   public function withUploadLocation(string $uploadLocation): static {
+    if (!$this->fileSystem->prepareDirectory($uploadLocation, 0)) {
+      throw new \RuntimeException("The upload location \"{$uploadLocation}\" does not exist or is not writable!");
+    }
+
     $this->uploadLocation = $uploadLocation;
 
     return $this;
@@ -118,6 +126,10 @@ class ImageElementBuilder {
   }
 
   public function withPreviewImageStyle(string $imageStyle): static {
+    if (!$this->entityRepository->hasEntityIdForType('image_style', $imageStyle)) {
+      throw new \RuntimeException("The image style \"{$imageStyle}\" does not exist in the database!");
+    }
+
     $this->previewImageStyle = $imageStyle;
 
     return $this;
