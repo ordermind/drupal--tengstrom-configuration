@@ -12,6 +12,7 @@ use Drupal\Core\Extension\ThemeHandlerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\tengstrom_configuration\Concerns\UploadsFiles;
 use Drupal\tengstrom_configuration\Factories\ImageElementFactory;
@@ -63,7 +64,7 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
       previewImageStyle: 'config_thumbnail',
       fileId: $this->getFileIdFromUuid($config->get('uuid')) ?? NULL,
       optimalDimensions: $this->uploadDimensions,
-      maxSize: '1 KB'
+      maxSize: '2 KB'
     );
 
     $form['favicon'] = $this->elementFactory->create($options);
@@ -75,14 +76,7 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
     $oldFile = $this->getOldFile($form_state, 'favicon');
     $newFile = $this->saveFileField($form_state, 'favicon');
     if ($newFile) {
-      if (!$oldFile || $newFile->uuid() !== $oldFile->uuid()) {
-        $newFile = $this->fileRepository->move(
-          $newFile,
-          $this->getNewFileUriFromRename($newFile, 'favicon'),
-          FileSystemInterface::EXISTS_REPLACE
-        );
-      }
-
+      $this->renameNewFile($oldFile, $newFile);
       $moduleConfig->set('uuid', $newFile->uuid());
     }
     else {
@@ -107,6 +101,32 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
    */
   protected function getFileStorage(): EntityStorageInterface {
     return $this->fileStorage;
+
+  }
+
+  /**
+   * This method is meant to ensure that the file is always called "favicon"
+   * in the file system.
+   */
+  protected function renameNewFile(?FileInterface $oldFile, FileInterface $newFile): FileInterface {
+    // Old and new file are the same.
+    if ($oldFile && $newFile->uuid() === $oldFile->uuid()) {
+      return $newFile;
+    }
+
+    $sourceUri = $newFile->getFileUri();
+    $destinationUri = $this->getNewFileUriFromRename($newFile, 'favicon');
+
+    if ($sourceUri === $destinationUri) {
+      // The filename is already correct, no rename is needed.
+      return $newFile;
+    }
+
+    return $this->fileRepository->move(
+      $newFile,
+      $destinationUri,
+      FileSystemInterface::EXISTS_REPLACE
+    );
 
   }
 
