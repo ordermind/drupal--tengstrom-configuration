@@ -15,8 +15,9 @@ trait UploadsFiles {
   abstract protected function getFileStorage(): FileStorage;
 
   protected function saveFileField(?int $oldFileId, ?int $newFileId): ?File {
-    $oldFile = $this->getFileStorage()->load($oldFileId);
+    $oldFile = $this->loadFileFromId($oldFileId);
 
+    // If there is no new file, delete the old one.
     if (!$newFileId) {
       if ($oldFile) {
         $this->getFileStorage()->delete([$oldFile]);
@@ -25,7 +26,7 @@ trait UploadsFiles {
       return NULL;
     }
 
-    $newFile = $this->getFileStorage()->load($newFileId);
+    $newFile = $this->loadFileFromId($newFileId);
     if (!($newFile instanceof FileInterface)) {
       return NULL;
     }
@@ -76,16 +77,24 @@ trait UploadsFiles {
     $themeConfig->save();
   }
 
+  protected function loadFileFromId(?int $fileId): ?FileInterface {
+    if (!$fileId) {
+      return NULL;
+    }
+
+    return $this->getFileStorage()->load($fileId);
+  }
+
   protected function getNewFileId(FormStateInterface $form_state, string $fieldName): ?int {
     $fieldValue = reset($form_state->getValue($fieldName));
 
-    return ((int) $fieldValue) ?? NULL;
+    return ((int) $fieldValue) ?: NULL;
   }
 
   protected function getOldFileId(FormStateInterface $form_state, string $fieldName): ?int {
     $fieldValue = reset($form_state->getCompleteForm()[$fieldName]['#default_value']);
 
-    return ((int) $fieldValue) ?? NULL;
+    return ((int) $fieldValue) ?: NULL;
   }
 
 }
