@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Drupal\tengstrom_configuration\Concerns;
 
 use Drupal\Core\Config\Config;
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\Entity\File;
 use Drupal\file\FileInterface;
+use Drupal\file\FileStorage;
 
 trait UploadsFiles {
 
-  abstract protected function getFileStorage(): EntityStorageInterface;
+  abstract protected function getFileStorage(): FileStorage;
 
   protected function saveFileField(FormStateInterface $form_state, string $fieldName): ?File {
     $fileData = $form_state->getValue($fieldName);
@@ -27,7 +27,11 @@ trait UploadsFiles {
       return NULL;
     }
 
-    $newFile = File::load($fileData[0]);
+    $newFile = $this->getFileStorage()->load($fileData[0]);
+    if (!($newFile instanceof FileInterface)) {
+      return NULL;
+    }
+
     $newFile->setPermanent();
     $newFile->save();
 

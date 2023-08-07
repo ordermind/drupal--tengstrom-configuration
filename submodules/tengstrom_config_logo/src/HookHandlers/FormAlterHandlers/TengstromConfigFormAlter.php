@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ThemeHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\file\FileStorage;
 use Drupal\tengstrom_configuration\Concerns\UploadsFiles;
 use Drupal\tengstrom_configuration\Factories\ImageElementFactory;
 use Drupal\tengstrom_configuration\ValueObjects\ImageElementOptions;
@@ -77,7 +78,7 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   /**
    * {@inheritDoc}
    */
-  protected function getFileStorage(): EntityStorageInterface {
+  protected function getFileStorage(): FileStorage {
     return $this->fileStorage;
   }
 
