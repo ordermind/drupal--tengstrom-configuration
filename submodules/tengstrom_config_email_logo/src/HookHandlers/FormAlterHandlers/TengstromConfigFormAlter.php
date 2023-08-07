@@ -63,15 +63,9 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
 
   public function submit(array &$form, FormStateInterface $form_state): void {
     $moduleConfig = $this->configFactory->getEditable('tengstrom_config_email_logo.settings');
-
     $newFile = $this->saveFileField($form_state, 'email_logo');
-    if ($newFile) {
-      $moduleConfig->set('uuid', $newFile->uuid());
-    }
-    else {
-      $moduleConfig->set('uuid', NULL);
-    }
-    $moduleConfig->save();
+
+    $this->updateModuleConfig($moduleConfig, $newFile);
   }
 
   /**
@@ -79,7 +73,6 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
    */
   protected function getFileStorage(): EntityStorageInterface {
     return $this->fileStorage;
-
   }
 
 }

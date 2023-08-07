@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\tengstrom_configuration\Concerns;
 
+use Drupal\Core\Config\Config;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\Entity\File;
@@ -51,14 +52,6 @@ trait UploadsFiles {
     return NULL;
   }
 
-  protected function getNewFileUriFromRename(FileInterface $file, string $newFilenameWithoutExtension): string {
-    $oldFilename = $file->getFilename();
-    $oldParts = explode('.', $oldFilename);
-    $newFilename = basename($newFilenameWithoutExtension) . '.' . end($oldParts);
-
-    return str_replace($oldFilename, $newFilename, $file->getFileUri());
-  }
-
   protected function getOldFile(FormStateInterface $form_state, string $fieldName): ?File {
     $oldFileId = reset($form_state->getCompleteForm()[$fieldName]['#default_value']);
     if (!$oldFileId) {
@@ -66,6 +59,28 @@ trait UploadsFiles {
     }
 
     return $this->getFileStorage()->load($oldFileId);
+  }
+
+  protected function updateModuleConfig(Config $moduleConfig, ?FileInterface $newFile): void {
+    if ($newFile) {
+      $moduleConfig->set('uuid', $newFile->uuid());
+    }
+    else {
+      $moduleConfig->set('uuid', NULL);
+    }
+    $moduleConfig->save();
+  }
+
+  protected function updateThemeConfig(Config $themeConfig, ?FileInterface $newFile, string $fieldName): void {
+    if ($newFile) {
+      $themeConfig->set("{$fieldName}.use_default", FALSE);
+      $themeConfig->set("{$fieldName}.path", $newFile->getFileUri());
+    }
+    else {
+      $themeConfig->set("{$fieldName}.use_default", TRUE);
+      $themeConfig->set("{$fieldName}.path", '');
+    }
+    $themeConfig->save();
   }
 
 }
