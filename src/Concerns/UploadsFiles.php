@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Drupal\tengstrom_configuration\Concerns;
 
 use Drupal\Core\Config\Config;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\Entity\File;
 use Drupal\file\FileInterface;
-use Drupal\file\FileStorage;
 
 trait UploadsFiles {
 
-  abstract protected function getFileStorage(): FileStorage;
+  abstract protected function getFileStorage(): EntityStorageInterface;
 
   protected function saveFileField(?int $oldFileId, ?int $newFileId): ?File {
     $oldFile = $this->loadFileFromId($oldFileId);
@@ -84,16 +84,24 @@ trait UploadsFiles {
     return $this->getFileStorage()->load($fileId);
   }
 
-  protected function getNewFileId(FormStateInterface $form_state, string $fieldName): ?int {
-    $fieldValue = reset($form_state->getValue($fieldName));
+  /**
+   * Please note that this method does not support multi-value fields.
+   */
+  protected function getOldFileId(FormStateInterface $form_state, string $fieldName): ?int {
+    $fieldValue = $form_state->getCompleteForm()[$fieldName]['#default_value'];
+    $firstFieldValue = reset($fieldValue);
 
-    return ((int) $fieldValue) ?: NULL;
+    return ((int) $firstFieldValue) ?: NULL;
   }
 
-  protected function getOldFileId(FormStateInterface $form_state, string $fieldName): ?int {
-    $fieldValue = reset($form_state->getCompleteForm()[$fieldName]['#default_value']);
+  /**
+   * Please note that this method does not support multi-value fields.
+   */
+  protected function getNewFileId(FormStateInterface $form_state, string $fieldName): ?int {
+    $fieldValue = $form_state->getValue($fieldName);
+    $firstFieldValue = reset($fieldValue);
 
-    return ((int) $fieldValue) ?: NULL;
+    return ((int) $firstFieldValue) ?: NULL;
   }
 
 }

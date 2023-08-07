@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Drupal\Tests\tengstrom_configuration\ElementFactorys;
+namespace Drupal\Tests\tengstrom_configuration\Factories;
 
 use Drupal\Core\Entity\EntityType;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
