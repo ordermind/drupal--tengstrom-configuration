@@ -73,7 +73,9 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
   public function submit(array &$form, FormStateInterface $form_state): void {
     $moduleConfig = $this->configFactory->getEditable('tengstrom_config_favicon.settings');
     $themeConfig = $this->configFactory->getEditable($this->themeHandler->getDefault() . '.settings');
-    $newFile = $this->saveFileField($form_state, 'favicon');
+    $oldFileId = $this->getOldFileId($form_state, 'favicon');
+    $newFileId = $this->getNewFileId($form_state, 'favicon');
+    $newFile = $this->saveFileField($oldFileId, $newFileId);
 
     $this->updateModuleConfig($moduleConfig, $newFile);
     $this->updateThemeConfig($themeConfig, $newFile, 'favicon');

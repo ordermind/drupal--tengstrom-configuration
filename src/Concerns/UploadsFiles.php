@@ -14,12 +14,10 @@ trait UploadsFiles {
 
   abstract protected function getFileStorage(): FileStorage;
 
-  protected function saveFileField(FormStateInterface $form_state, string $fieldName): ?File {
-    $fileData = $form_state->getValue($fieldName);
+  protected function saveFileField(?int $oldFileId, ?int $newFileId): ?File {
+    $oldFile = $this->getFileStorage()->load($oldFileId);
 
-    $oldFile = $this->getOldFile($form_state, $fieldName);
-
-    if (!$fileData) {
+    if (!$newFileId) {
       if ($oldFile) {
         $this->getFileStorage()->delete([$oldFile]);
       }
@@ -27,7 +25,7 @@ trait UploadsFiles {
       return NULL;
     }
 
-    $newFile = $this->getFileStorage()->load($fileData[0]);
+    $newFile = $this->getFileStorage()->load($newFileId);
     if (!($newFile instanceof FileInterface)) {
       return NULL;
     }
@@ -56,15 +54,6 @@ trait UploadsFiles {
     return NULL;
   }
 
-  protected function getOldFile(FormStateInterface $form_state, string $fieldName): ?File {
-    $oldFileId = reset($form_state->getCompleteForm()[$fieldName]['#default_value']);
-    if (!$oldFileId) {
-      return NULL;
-    }
-
-    return $this->getFileStorage()->load($oldFileId);
-  }
-
   protected function updateModuleConfig(Config $moduleConfig, ?FileInterface $newFile): void {
     if ($newFile) {
       $moduleConfig->set('uuid', $newFile->uuid());
@@ -85,6 +74,18 @@ trait UploadsFiles {
       $themeConfig->set("{$fieldName}.path", '');
     }
     $themeConfig->save();
+  }
+
+  protected function getNewFileId(FormStateInterface $form_state, string $fieldName): ?int {
+    $fieldValue = reset($form_state->getValue($fieldName));
+
+    return ((int) $fieldValue) ?? NULL;
+  }
+
+  protected function getOldFileId(FormStateInterface $form_state, string $fieldName): ?int {
+    $fieldValue = reset($form_state->getCompleteForm()[$fieldName]['#default_value']);
+
+    return ((int) $fieldValue) ?? NULL;
   }
 
 }
