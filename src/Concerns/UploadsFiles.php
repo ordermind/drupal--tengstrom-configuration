@@ -7,14 +7,13 @@ namespace Drupal\tengstrom_configuration\Concerns;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\file\Entity\File;
 use Drupal\file\FileInterface;
 
 trait UploadsFiles {
 
   abstract protected function getFileStorage(): EntityStorageInterface;
 
-  protected function saveFileField(?int $oldFileId, ?int $newFileId): ?File {
+  protected function saveFileField(?int $oldFileId, ?int $newFileId): ?FileInterface {
     $oldFile = $this->loadFileFromId($oldFileId);
     $newFile = $this->loadFileFromId($newFileId);
     $oldFileExists = $oldFile instanceof FileInterface;

@@ -38,10 +38,8 @@ class UploadsFilesTest extends UnitTestCase {
    */
   public function testSaveFileField(
     bool $expectedOldFileDeleted,
-    ?FileInterface $oldFile,
-    ?FileInterface $newFile,
-    ?int $oldFileId,
-    ?int $newFileId
+    ?string $oldFileUuid,
+    ?string $newFileUuid,
   ): void {
     $containerFactory = new TestServiceContainerFactory();
     $container = $containerFactory->createWithBasicServices();
@@ -66,11 +64,21 @@ class UploadsFilesTest extends UnitTestCase {
 
     \Drupal::setContainer($container);
 
-    if ($oldFile) {
-      $fileStorage->create(['id' => $oldFile->id(), 'uuid' => $oldFile->uuid()])->save();
+    $oldFile = NULL;
+    $oldFileId = NULL;
+    if ($oldFileUuid) {
+      $oldFile = $fileStorage->create(['uuid' => $oldFileUuid]);
+      $oldFile->save();
+      $oldFileId = $oldFile->id();
     }
-    if ($newFile) {
-      $fileStorage->create(['id' => $newFile->id(), 'uuid' => $newFile->uuid()])->save();
+
+    $newFile = NULL;
+    $newFileId = NULL;
+    if ($newFileUuid) {
+      $newFile = $fileStorage->create(['uuid' => $newFileUuid]);
+      $newFile->save();
+      $newFileId = $newFile->id();
+      $this->assertSame(0, $newFile->getStatus());
     }
 
     $testSubject = new class($fileStorage) {
@@ -89,16 +97,24 @@ class UploadsFilesTest extends UnitTestCase {
 
     $testSubject->saveFileField($oldFileId, $newFileId);
 
+    // If neither the old file or new file have been created in the context, just check that they are not stored.
     if (!$oldFile && !$newFile) {
       $this->assertSame(0, $fileStorage->count());
     }
 
-    if ($oldFile && $expectedOldFileDeleted) {
-      $this->assertNull($fileStorage->load($oldFileId));
+    // If the old file has been created in the context, check that it is deleted if it is expected to be, and otherwise not.
+    if ($oldFile) {
+      if ($expectedOldFileDeleted) {
+        $this->assertNull($fileStorage->load($oldFile->id()));
+      }
+      else {
+        $this->assertSame($oldFile, $fileStorage->load($oldFile->id()));
+      }
     }
 
+    // If the new file has been created, it should be set to permanent status.
     if ($newFile) {
-      $updatedFile = $fileStorage->load($newFileId);
+      $updatedFile = $fileStorage->load($newFile->id());
       $this->assertInstanceOf(FileEntity::class, $updatedFile);
       /** @var \Drupal\Tests\tengstrom_configuration\Unit\Fixtures\FileEntity $updatedFile*/
       $this->assertSame(File::STATUS_PERMANENT, $updatedFile->getStatus());
@@ -106,23 +122,17 @@ class UploadsFilesTest extends UnitTestCase {
   }
 
   public function provideSaveFieldFieldCases(): array {
-    $mockOldFile = $this->prophesize(File::class);
-    $mockOldFile->id()->willReturn(1);
-    $mockOldFile->uuid()->willReturn('old_file_uuid');
-    $oldFile = $mockOldFile->reveal();
-
-    $mockNewFile = $this->prophesize(File::class);
-    $mockNewFile->id()->willReturn(2);
-    $mockNewFile->uuid()->willReturn('new_file_uuid');
-    $newFile = $mockNewFile->reveal();
-
     return [
       // Saving form with neither old file nor new file.
-      [TRUE, NULL, NULL, NULL, NULL],
+      [TRUE, NULL, NULL],
       // Saving form with old file but no new file -> delete old file.
-      [TRUE, $oldFile, NULL, $oldFile->id(), NULL],
+      [TRUE, 'old_file_uuid', NULL],
       // Saving form with new file but no old file -> do not delete old file.
-      [FALSE, NULL, $newFile, NULL, $newFile->id()],
+      [FALSE, NULL, 'new_file_uuid'],
+      // Saving form with both old file and a new file without change -> do not delete old file.
+      [FALSE, 'old_file_uuid', 'old_file_uuid'],
+      // Saving form with both old file and a new changed file -> delete old file.
+      [TRUE, 'old_file_uuid', 'new_file_uuid'],
     ];
   }
 

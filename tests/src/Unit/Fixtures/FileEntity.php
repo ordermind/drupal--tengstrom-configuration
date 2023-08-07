@@ -7,11 +7,18 @@ namespace Drupal\Tests\tengstrom_configuration\Unit\Fixtures;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
 use Drupal\user\UserInterface;
 use Ordermind\DrupalTengstromShared\Test\Fixtures\Entity\DummyEntity;
 
 class FileEntity extends DummyEntity implements \IteratorAggregate, FileInterface {
+  public ?FileEntity $original;
+
   protected int $status = 0;
+
+  public function getIterator(): \Traversable {
+    return new \ArrayIterator([]);
+  }
 
   public function getFilename() {}
 
