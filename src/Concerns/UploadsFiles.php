@@ -17,18 +17,20 @@ trait UploadsFiles {
   protected function saveFileField(?int $oldFileId, ?int $newFileId): ?File {
     $oldFile = $this->loadFileFromId($oldFileId);
     $newFile = $this->loadFileFromId($newFileId);
+    $oldFileExists = $oldFile instanceof FileInterface;
+    $newFileExists = $newFile instanceof FileInterface;
 
     // If there is no new file, delete the old one if it exists and return.
-    if (!($newFile instanceof FileInterface)) {
-      if ($oldFile instanceof FileInterface) {
+    if (!($newFileExists)) {
+      if ($oldFileExists) {
         $this->getFileStorage()->delete([$oldFile]);
       }
 
       return NULL;
     }
 
-    // File has been changed, delete the old one.
-    if ($oldFile && $newFile->uuid() !== $oldFile->uuid()) {
+    $fileIsReplaced = $oldFileExists && $newFile->uuid() !== $oldFile->uuid();
+    if ($fileIsReplaced) {
       $this->getFileStorage()->delete([$oldFile]);
     }
 
