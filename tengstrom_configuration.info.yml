@@ -4,4 +4,7 @@ package: Tengström Profile
 type: module
 core_version_requirement: ^9 || ^10
 
+dependencies:
+  - file_link_improvements:file_link_improvements
+
 version: 0.1.0
