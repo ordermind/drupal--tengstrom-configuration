@@ -43,7 +43,7 @@ class ImageElementFactory {
       ],
       '#title'                => $options->getLabel(),
       '#theme' => 'image_widget',
-      '#trim_file_link' => 20,
+      '#trim_file_link' => 17,
       '#weight' => $options->getWeight(),
     ];
 
