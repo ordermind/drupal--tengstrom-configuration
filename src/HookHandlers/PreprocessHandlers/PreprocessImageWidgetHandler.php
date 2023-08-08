@@ -25,7 +25,7 @@ class PreprocessImageWidgetHandler implements PreprocessHandlerInterface {
       $file = reset($element['#files']);
       $element['file_' . $file->id()]['filename']['#suffix'] = ' <span class="file-size">(' . format_size($file->getSize()) . ')</span> ';
       $file_variables = [
-        'style_name' => $element['#preview_image_style'],
+        'style_name' => $element['#preview_image_style'] ?? NULL,
         'uri' => $file->getFileUri(),
       ];
 
@@ -45,14 +45,25 @@ class PreprocessImageWidgetHandler implements PreprocessHandlerInterface {
         }
       }
 
-      $element['preview'] = [
-        '#weight' => -10,
-        '#theme' => 'image_style',
-        '#width' => $file_variables['width'],
-        '#height' => $file_variables['height'],
-        '#style_name' => $file_variables['style_name'],
-        '#uri' => $file_variables['uri'],
-      ];
+      if (isset($file_variables['style_name'])) {
+        $element['preview'] = [
+          '#weight' => -10,
+          '#theme' => 'image_style',
+          '#width' => $file_variables['width'],
+          '#height' => $file_variables['height'],
+          '#style_name' => $file_variables['style_name'],
+          '#uri' => $file_variables['uri'],
+        ];
+      }
+      else {
+        $element['preview'] = [
+          '#weight' => -10,
+          '#theme' => 'image',
+          '#width' => $file_variables['width'],
+          '#height' => $file_variables['height'],
+          '#uri' => $file_variables['uri'],
+        ];
+      }
 
       // Store the dimensions in the form so the file doesn't have to be
       // accessed again. This is important for remote files.
