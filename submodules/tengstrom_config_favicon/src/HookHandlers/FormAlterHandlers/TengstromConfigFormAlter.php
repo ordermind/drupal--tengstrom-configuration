@@ -63,7 +63,8 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
       fileId: $this->getFileIdFromUuid($config->get('uuid')) ?? NULL,
       previewImageStyle: 'config_thumbnail',
       optimalDimensions: $this->uploadDimensions,
-      maxSize: '2 KB'
+      maxSize: '2 KB',
+      allowedExtensions: ['ico', 'gif', 'png']
     );
 
     $form['favicon'] = $this->elementFactory->create($options);
