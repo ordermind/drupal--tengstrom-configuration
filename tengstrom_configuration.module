@@ -6,7 +6,7 @@ declare(strict_types=1);
  * Implements hook_preprocess_HOOK().
  */
 function tengstrom_configuration_preprocess_image_widget(array &$variables): void {
-  /** @var \Drupal\tengstrom_mainmenu\HookHandlers\PreprocessHandlers\PreprocessBlockHandler $service */
+  /** @var \Drupal\tengstrom_configuration\HookHandlers\PreprocessHandlers\PreprocessImageWidgetHandler $service */
   $service = \Drupal::service('tengstrom_configuration.hook_handlers.preprocess_image_widget');
 
   $service->preprocess($variables);
