@@ -4,7 +4,7 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "git@github.com:ordermind/drupal--file-link-improvements.git",
+            "url": "git@github.com:ordermind/drupal--file-improvements.git",
             "no-api": true
         },
         {
@@ -16,7 +16,7 @@
     "require": {
         "chrisullyott/php-filesize": "^4.2",
         "drupal/core": "^9.4 || ^10",
-        "drupal/file_link_improvements": "dev-master",
+        "drupal/file_improvements": "dev-master",
         "ordermind/drupal--tengstrom-shared": "dev-master",
         "ordermind/php-helpers": "^2.0"
     }

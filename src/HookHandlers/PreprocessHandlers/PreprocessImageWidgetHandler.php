@@ -24,6 +24,10 @@ class PreprocessImageWidgetHandler implements PreprocessHandlerInterface {
     if (!empty($element['fids']['#value'])) {
       $file = reset($element['#files']);
       $element['file_' . $file->id()]['filename']['#suffix'] = ' <span class="file-size">(' . format_size($file->getSize()) . ')</span> ';
+      if (!empty($element['#trim_file_link'])) {
+        $element['file_' . $file->id()]['filename']['#trim'] = $element['#trim_file_link'];
+      }
+
       $file_variables = [
         'style_name' => $element['#preview_image_style'] ?? NULL,
         'uri' => $file->getFileUri(),
