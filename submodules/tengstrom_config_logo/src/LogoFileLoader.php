@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Drupal\tengstrom_config_logo\FileLoader;
+namespace Drupal\tengstrom_config_logo;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;

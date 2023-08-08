@@ -12,7 +12,7 @@ services:
 
   # Other services
   tengstrom_config_logo.file_loader:
-    class: Drupal\tengstrom_config_logo\FileLoader\LogoFileLoader
+    class: Drupal\tengstrom_config_logo\LogoFileLoader
     arguments:
       - '@config.factory'
       - '@entity_type.manager'
