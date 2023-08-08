@@ -52,8 +52,8 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
 
     $options = new ImageElementOptions(
       label: $this->translator->translate('Logo for e-mail'),
-      previewImageStyle: 'config_thumbnail',
       fileId: $this->getFileIdFromUuid($config->get('uuid')) ?? NULL,
+      previewImageStyle: 'config_thumbnail',
       optimalDimensions: $this->uploadDimensions,
       weight: -5
     );

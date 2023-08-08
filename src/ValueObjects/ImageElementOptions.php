@@ -9,9 +9,9 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 class ImageElementOptions {
   protected TranslatableMarkup|string $label;
-  protected string $previewImageStyle;
-  protected ?int $fileId;
   protected TranslatableMarkup|string|NULL $descriptionOverride;
+  protected ?int $fileId;
+  protected ?string $previewImageStyle;
   protected ?UploadDimensions $optimalDimensions;
   protected string $uploadLocation;
   protected FileSize $maxSize;
@@ -21,12 +21,12 @@ class ImageElementOptions {
 
   public function __construct(
     TranslatableMarkup|string $label,
-    string $previewImageStyle,
-    ?int $fileId = NULL,
     TranslatableMarkup|string|NULL $descriptionOverride = NULL,
+    ?int $fileId = NULL,
+    ?string $previewImageStyle = NULL,
     ?UploadDimensions $optimalDimensions = NULL,
-    string $maxSize = '200 KB',
     string $uploadLocation = 'public://',
+    string $maxSize = '200 KB',
     array $allowedExtensions = ['gif', 'png', 'jpg', 'jpeg', 'webp'],
     int $weight = 0
   ) {
@@ -35,9 +35,9 @@ class ImageElementOptions {
     }
 
     $this->label = $label;
-    $this->previewImageStyle = $previewImageStyle;
-    $this->fileId = $fileId;
     $this->descriptionOverride = $descriptionOverride;
+    $this->fileId = $fileId;
+    $this->previewImageStyle = $previewImageStyle;
     $this->optimalDimensions = $optimalDimensions;
     $this->maxSize = new FileSize($maxSize);
     $this->uploadLocation = $uploadLocation;
@@ -49,16 +49,16 @@ class ImageElementOptions {
     return $this->label;
   }
 
-  public function getPreviewImageStyle(): string {
-    return $this->previewImageStyle;
+  public function getDescriptionOverride(): TranslatableMarkup|string|NULL {
+    return $this->descriptionOverride;
   }
 
   public function getFileId(): ?int {
     return $this->fileId;
   }
 
-  public function getDescriptionOverride(): TranslatableMarkup|string|NULL {
-    return $this->descriptionOverride;
+  public function getPreviewImageStyle(): ?string {
+    return $this->previewImageStyle;
   }
 
   public function getOptimalDimensions(): ?UploadDimensions {

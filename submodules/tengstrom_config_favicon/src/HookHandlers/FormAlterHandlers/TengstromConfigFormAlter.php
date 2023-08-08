@@ -60,8 +60,8 @@ class TengstromConfigFormAlter implements FormAlterHandlerInterface {
 
     $options = new ImageElementOptions(
       label: $this->translator->translate('Favicon'),
-      previewImageStyle: 'config_thumbnail',
       fileId: $this->getFileIdFromUuid($config->get('uuid')) ?? NULL,
+      previewImageStyle: 'config_thumbnail',
       optimalDimensions: $this->uploadDimensions,
       maxSize: '2 KB'
     );

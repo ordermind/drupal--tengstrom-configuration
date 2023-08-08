@@ -28,7 +28,7 @@ class ImageElementFactory {
   public function create(ImageElementOptions $options): array {
     $this->validate($options);
 
-    return [
+    $element = [
       '#type'                 => 'managed_file',
       '#upload_location'      => $options->getUploadLocation(),
       '#default_value' => array_filter(
@@ -43,9 +43,14 @@ class ImageElementFactory {
       ],
       '#title'                => $options->getLabel(),
       '#theme' => 'image_widget',
-      '#preview_image_style' => $options->getPreviewImageStyle(),
       '#weight' => $options->getWeight(),
     ];
+
+    if ($options->getPreviewImageStyle()) {
+      $element['#preview_image_style'] = $options->getPreviewImageStyle();
+    }
+
+    return $element;
   }
 
   protected function validate(ImageElementOptions $options): void {
@@ -60,7 +65,7 @@ class ImageElementFactory {
     }
 
     $imageStyle = $options->getPreviewImageStyle();
-    if (!$this->entityRepository->hasEntityIdForType('image_style', $imageStyle)) {
+    if ($imageStyle && !$this->entityRepository->hasEntityIdForType('image_style', $imageStyle)) {
       throw new \RuntimeException("The image style \"{$imageStyle}\" does not exist in the database!");
     }
   }

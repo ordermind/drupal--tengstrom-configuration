@@ -99,13 +99,12 @@ class ImageElementFactoryTest extends UnitTestCase {
       ],
       '#title' => 'Test Field',
       '#theme' => 'image_widget',
-      '#preview_image_style' => 'valid_style',
       '#weight' => 0,
     ];
   }
 
   public function testCreateThrowsExceptionOnFileNotExist(): void {
-    $options = new ImageElementOptions('Test Field', 'valid_style', fileId: 5);
+    $options = new ImageElementOptions('Test Field', fileId: 5);
 
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('The file id "5" does not exist in the database!');
@@ -113,7 +112,7 @@ class ImageElementFactoryTest extends UnitTestCase {
   }
 
   public function testCreateThrowsExceptionOnInvalidUploadLocation(): void {
-    $options = new ImageElementOptions('Test Field', 'valid_style', uploadLocation: 'invalid_location');
+    $options = new ImageElementOptions('Test Field', uploadLocation: 'invalid_location');
 
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('The upload location "invalid_location" does not exist or is not writable!');
@@ -121,7 +120,7 @@ class ImageElementFactoryTest extends UnitTestCase {
   }
 
   public function testCreateThrowsExceptionOnInvalidImageStyle(): void {
-    $options = new ImageElementOptions('Test Field', 'invalid_style');
+    $options = new ImageElementOptions('Test Field', previewImageStyle: 'invalid_style');
 
     $this->expectException(\RuntimeException::class);
     $this->expectExceptionMessage('The image style "invalid_style" does not exist in the database!');
@@ -129,7 +128,7 @@ class ImageElementFactoryTest extends UnitTestCase {
   }
 
   public function testCreateWithBasicConfig(): void {
-    $options = new ImageElementOptions('Test Field', 'valid_style');
+    $options = new ImageElementOptions('Test Field');
 
     $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
@@ -140,7 +139,7 @@ class ImageElementFactoryTest extends UnitTestCase {
   /**
    * @dataProvider provideDescriptions
    */
-  public function testCreateWithDescription(bool $useTranslation): void {
+  public function testCreateWithDescriptionOverride(bool $useTranslation): void {
     if ($useTranslation) {
       $description = $this->translator->translate('Test description');
     }
@@ -148,7 +147,7 @@ class ImageElementFactoryTest extends UnitTestCase {
       $description = 'Test description';
     }
 
-    $options = new ImageElementOptions('Test Field', 'valid_style', descriptionOverride: $description);
+    $options = new ImageElementOptions('Test Field', descriptionOverride: $description);
 
     $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
@@ -164,8 +163,28 @@ class ImageElementFactoryTest extends UnitTestCase {
     ];
   }
 
+  public function testCreateWithFileId(): void {
+    $options = new ImageElementOptions('Test Field', fileId: 1);
+
+    $result = $this->factory->create($options);
+    $expectedResult = $this->getDefaultExpectedResult();
+    $expectedResult['#default_value'] = [1];
+
+    $this->assertEquals($expectedResult, $result);
+  }
+
+  public function testCreateWithPreviewImageStyle(): void {
+    $options = new ImageElementOptions('Test Field', previewImageStyle: 'valid_style');
+
+    $result = $this->factory->create($options);
+    $expectedResult = $this->getDefaultExpectedResult();
+    $expectedResult['#preview_image_style'] = 'valid_style';
+
+    $this->assertEquals($expectedResult, $result);
+  }
+
   public function testCreateWithOptimalDimensions(): void {
-    $options = new ImageElementOptions('Test Field', 'valid_style', optimalDimensions: UploadDimensions::fromArray(['width' => 35, 'height' => 78]));
+    $options = new ImageElementOptions('Test Field', optimalDimensions: UploadDimensions::fromArray(['width' => 35, 'height' => 78]));
 
     $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
@@ -182,18 +201,8 @@ class ImageElementFactoryTest extends UnitTestCase {
     $this->assertEquals($expectedResult, $result);
   }
 
-  public function testCreateWithFileId(): void {
-    $options = new ImageElementOptions('Test Field', 'valid_style', fileId: 1);
-
-    $result = $this->factory->create($options);
-    $expectedResult = $this->getDefaultExpectedResult();
-    $expectedResult['#default_value'] = [1];
-
-    $this->assertEquals($expectedResult, $result);
-  }
-
   public function testCreateWithUploadLocation(): void {
-    $options = new ImageElementOptions('Test Field', 'valid_style', uploadLocation: 'public://');
+    $options = new ImageElementOptions('Test Field', uploadLocation: 'public://');
 
     $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
@@ -203,7 +212,7 @@ class ImageElementFactoryTest extends UnitTestCase {
   }
 
   public function testCreateWithAllowedExtensions(): void {
-    $options = new ImageElementOptions('Test Field', 'valid_style', allowedExtensions: ['gif']);
+    $options = new ImageElementOptions('Test Field', allowedExtensions: ['gif']);
 
     $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
@@ -220,7 +229,7 @@ class ImageElementFactoryTest extends UnitTestCase {
   }
 
   public function testCreateWithMaxSize(): void {
-    $options = new ImageElementOptions('Test Field', 'valid_style', maxSize: '50 KB');
+    $options = new ImageElementOptions('Test Field', maxSize: '50 KB');
 
     $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
@@ -237,7 +246,7 @@ class ImageElementFactoryTest extends UnitTestCase {
   }
 
   public function testCreateWithWeight(): void {
-    $options = new ImageElementOptions('Test Field', 'valid_style', weight: -5);
+    $options = new ImageElementOptions('Test Field', weight: -5);
 
     $result = $this->factory->create($options);
     $expectedResult = $this->getDefaultExpectedResult();
