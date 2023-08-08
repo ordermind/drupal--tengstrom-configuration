@@ -99,6 +99,7 @@ class ImageElementFactoryTest extends UnitTestCase {
       ],
       '#title' => 'Test Field',
       '#theme' => 'image_widget',
+      '#trim_file_link' => 20,
       '#weight' => 0,
     ];
   }

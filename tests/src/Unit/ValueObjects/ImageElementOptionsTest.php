@@ -13,16 +13,16 @@ class ImageElementOptionsTest extends TestCase {
   public function testThrowsExceptionOnMissingAllowedExtensions(): void {
     $this->expectException(\DomainException::class);
     $this->expectExceptionMessage('Please supply at least one allowed extension.');
-    new ImageElementOptions('Test Field', 'valid_style', allowedExtensions: []);
+    new ImageElementOptions('Test Field', allowedExtensions: []);
   }
 
   public function testDefaultValues(): void {
-    $options = new ImageElementOptions('Test Field', 'valid_style');
+    $options = new ImageElementOptions('Test Field');
 
     $this->assertSame('Test Field', $options->getLabel());
-    $this->assertSame('valid_style', $options->getPreviewImageStyle());
-    $this->assertSame(NULL, $options->getFileId());
     $this->assertSame(NULL, $options->getDescriptionOverride());
+    $this->assertSame(NULL, $options->getFileId());
+    $this->assertSame(NULL, $options->getPreviewImageStyle());
     $this->assertSame(NULL, $options->getOptimalDimensions());
     $this->assertSame('public://', $options->getUploadLocation());
     $this->assertEquals(new FileSize('200 KB'), $options->getMaxSize());
