@@ -9,3 +9,10 @@ services:
       - '@theme_handler'
       - '@string_translation'
       - '%tengstrom_configuration%'
+
+  # Other services
+  tengstrom_config_logo.file_loader:
+    class: Drupal\tengstrom_config_logo\FileLoader\LogoFileLoader
+    arguments:
+      - '@config.factory'
+      - '@entity_type.manager'
