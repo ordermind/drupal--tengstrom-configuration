@@ -1,0 +1,5 @@
+tengstrom_configuration.form:
+  title: 'Logo / favicon'
+  parent: tengstrom_mainmenu.config
+  route_name: tengstrom_configuration.form
+  weight: 0
