@@ -8,3 +8,10 @@ services:
       - '@entity_type.manager'
       - '@string_translation'
       - '%tengstrom_configuration%'
+
+  # Other services
+  tengstrom_config_email_logo.file_loader:
+    class: Drupal\tengstrom_config_email_logo\EmailLogoFileLoader
+    arguments:
+      - '@config.factory'
+      - '@entity_type.manager'
