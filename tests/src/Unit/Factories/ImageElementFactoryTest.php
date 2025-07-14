@@ -157,7 +157,7 @@ class ImageElementFactoryTest extends UnitTestCase {
     $this->assertEquals($expectedResult, $result);
   }
 
-  public function provideDescriptions(): array {
+  public static function provideDescriptions(): array {
     return [
       [FALSE],
       [TRUE],

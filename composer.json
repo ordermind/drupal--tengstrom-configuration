@@ -20,7 +20,7 @@
     ],
     "require": {
         "chrisullyott/php-filesize": "^4.2",
-        "drupal/core": "^9.4 || ^10",
+        "drupal/core": "^10 || ^11",
         "drupal/file_improvements": "dev-master",
         "drupal/tengstrom_mainmenu": "dev-master",
         "ordermind/drupal--tengstrom-shared": "dev-master",

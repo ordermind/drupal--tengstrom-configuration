@@ -121,7 +121,7 @@ class UploadsFilesTest extends UnitTestCase {
     }
   }
 
-  public function provideSaveFieldFieldCases(): array {
+  public static function provideSaveFieldFieldCases(): array {
     return [
       // Saving form with neither old file nor new file.
       [TRUE, NULL, NULL],
@@ -349,7 +349,13 @@ class UploadsFilesTest extends UnitTestCase {
     // Prophecy does not support passing functions by reference so in this case we have to
     // use a different mocking framework.
     $mockFormState = $this->createStub(FormStateInterface::class);
-    $mockFormState->method('getValue')->withConsecutive([$fieldName])->willReturn($fieldValue);
+    $matcher = $this->exactly(1);
+    $mockFormState->expects($matcher)->method('getValue')->willReturnCallback(function (...$parameters) use ($matcher, $fieldName, $fieldValue) {
+        if ($matcher->getInvocationCount() === 1) {
+            $this->assertSame($fieldName, $parameters[0]);
+        }
+        return $fieldValue;
+    });
 
     $mockFileStorage = $this->prophesize(FileStorage::class);
     $fileStorage = $mockFileStorage->reveal();
@@ -372,7 +378,7 @@ class UploadsFilesTest extends UnitTestCase {
     $this->assertSame($expectedResult, $result);
   }
 
-  public function provideFileIdCases(): array {
+  public static function provideFileIdCases(): array {
     return [
       [NULL, []],
       [5, [5]],
