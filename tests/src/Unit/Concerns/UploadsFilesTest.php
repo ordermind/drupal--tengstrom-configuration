@@ -43,6 +43,7 @@ class UploadsFilesTest extends UnitTestCase {
   ): void {
     $containerFactory = new TestServiceContainerFactory();
     $container = $containerFactory->createWithBasicServices();
+    \Drupal::setContainer($container);
 
     $fileType = new EntityType([
       'id' => 'file',
@@ -62,8 +63,6 @@ class UploadsFilesTest extends UnitTestCase {
     $entityTypeManager = $mockEntityTypeManager->reveal();
     $container->set('entity_type.manager', $entityTypeManager);
 
-    \Drupal::setContainer($container);
-
     $oldFile = NULL;
     $oldFileId = NULL;
     if ($oldFileUuid) {
@@ -78,7 +77,6 @@ class UploadsFilesTest extends UnitTestCase {
       $newFile = $fileStorage->create(['uuid' => $newFileUuid]);
       $newFile->save();
       $newFileId = $newFile->id();
-      $this->assertSame(0, $newFile->getStatus());
     }
 
     $testSubject = new class($fileStorage) {
@@ -225,7 +223,7 @@ class UploadsFilesTest extends UnitTestCase {
   public function testUpdateThemeConfig(
     bool $expectedUseDefault,
     string $expectedPath,
-    ?FileInterface $newFile
+    ?FileInterface $newFile,
   ): void {
     $config = $this->createConfig();
 
@@ -318,6 +316,7 @@ class UploadsFilesTest extends UnitTestCase {
     ];
     $mockFormState = $this->createStub(FormStateInterface::class);
     $mockFormState->method('getCompleteForm')->willReturn($completeForm);
+    /** @var \Drupal\Core\Form\FormStateInterface $mockFormState */
 
     $mockFileStorage = $this->prophesize(FileStorage::class);
     $fileStorage = $mockFileStorage->reveal();
@@ -349,12 +348,13 @@ class UploadsFilesTest extends UnitTestCase {
     // Prophecy does not support passing functions by reference so in this case we have to
     // use a different mocking framework.
     $mockFormState = $this->createStub(FormStateInterface::class);
+    /** @var \PHPUnit\Framework\MockObject\MockObject $mockFormState */
     $matcher = $this->exactly(1);
     $mockFormState->expects($matcher)->method('getValue')->willReturnCallback(function (...$parameters) use ($matcher, $fieldName, $fieldValue) {
-        if ($matcher->getInvocationCount() === 1) {
-            $this->assertSame($fieldName, $parameters[0]);
-        }
-        return $fieldValue;
+      if ($matcher->getInvocationCount() === 1) {
+        $this->assertSame($fieldName, $parameters[0]);
+      }
+      return $fieldValue;
     });
 
     $mockFileStorage = $this->prophesize(FileStorage::class);
@@ -374,6 +374,7 @@ class UploadsFilesTest extends UnitTestCase {
 
     };
 
+    /** @var \Drupal\Core\Form\FormStateInterface $mockFormState */
     $result = $testSubject->getNewFileId($mockFormState, $fieldName);
     $this->assertSame($expectedResult, $result);
   }

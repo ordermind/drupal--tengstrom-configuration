@@ -31,6 +31,7 @@ class ImageElementFactoryTest extends UnitTestCase {
 
     $containerFactory = new TestServiceContainerFactory();
     $container = $containerFactory->createWithBasicServices();
+    \Drupal::setContainer($container);
 
     $imageStyleType = new EntityType([
       'id' => 'image_style',
@@ -60,8 +61,6 @@ class ImageElementFactoryTest extends UnitTestCase {
     $mockEntityTypeManager->getDefinition($fileType->id())->willReturn($fileType);
     $entityTypeManager = $mockEntityTypeManager->reveal();
     $container->set('entity_type.manager', $entityTypeManager);
-
-    \Drupal::setContainer($container);
 
     $mockFileSystem = $this->prophesize(FileSystemInterface::class);
     $mockFileSystem->prepareDirectory('public://', 0)->willReturn(TRUE);
