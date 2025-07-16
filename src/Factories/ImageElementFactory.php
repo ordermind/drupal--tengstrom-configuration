@@ -18,7 +18,7 @@ class ImageElementFactory {
   public function __construct(
     TranslationInterface $translator,
     EntityRepositoryInterface $entityRepository,
-    FileSystemInterface $fileSystem
+    FileSystemInterface $fileSystem,
   ) {
     $this->translator = $translator;
     $this->entityRepository = $entityRepository;
@@ -37,9 +37,9 @@ class ImageElementFactory {
       '#multiple'             => FALSE,
       '#description'          => $this->createDescription($options),
       '#upload_validators'    => [
-        'file_validate_is_image'      => [],
-        'file_validate_extensions'    => [implode(' ', $options->getAllowedExtensions())],
-        'file_validate_size'          => [$options->getMaxSize()->as('B')],
+        'FileIsImage'      => [],
+        'FileExtension'    => ['extensions' => implode(' ', $options->getAllowedExtensions())],
+        'FileSizeLimit'          => ['fileLimit' => $options->getMaxSize()->as('B')],
       ],
       '#title'                => $options->getLabel(),
       '#theme' => 'image_widget',

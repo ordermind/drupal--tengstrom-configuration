@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\tengstrom_configuration\HookHandlers\PreprocessHandlers;
 
 use Drupal\Core\Render\Element;
+use Drupal\Core\StringTranslation\ByteSizeMarkup;
 use Ordermind\DrupalTengstromShared\HookHandlers\PreprocessHandlerInterface;
 
 class PreprocessImageWidgetHandler implements PreprocessHandlerInterface {
@@ -23,7 +24,7 @@ class PreprocessImageWidgetHandler implements PreprocessHandlerInterface {
 
     if (!empty($element['fids']['#value'])) {
       $file = reset($element['#files']);
-      $element['file_' . $file->id()]['filename']['#suffix'] = ' <span class="file-size">(' . format_size($file->getSize()) . ')</span> ';
+      $element['file_' . $file->id()]['filename']['#suffix'] = ' <span class="file-size">(' . ByteSizeMarkup::create($file->getSize()) . ')</span> ';
       if (!empty($element['#trim_file_link'])) {
         $element['file_' . $file->id()]['filename']['#trim'] = $element['#trim_file_link'];
       }

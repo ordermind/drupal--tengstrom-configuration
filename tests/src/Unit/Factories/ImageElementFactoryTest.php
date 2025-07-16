@@ -92,9 +92,9 @@ class ImageElementFactoryTest extends UnitTestCase {
         ],
       ),
       '#upload_validators' => [
-        'file_validate_is_image' => [],
-        'file_validate_extensions' => ['gif png jpg jpeg webp'],
-        'file_validate_size' => [204800],
+        'FileIsImage' => [],
+        'FileExtension' => ['extensions' => 'gif png jpg jpeg webp'],
+        'FileSizeLimit' => ['fileLimit' => 204800],
       ],
       '#title' => 'Test Field',
       '#theme' => 'image_widget',
