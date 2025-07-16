@@ -16,6 +16,10 @@ class FileEntity extends DummyEntity implements \IteratorAggregate, FileInterfac
 
   protected int $status = 0;
 
+  public function getDownloadHeaders(): array {
+    return [];
+  }
+
   public function getIterator(): \Traversable {
     return new \ArrayIterator([]);
   }
