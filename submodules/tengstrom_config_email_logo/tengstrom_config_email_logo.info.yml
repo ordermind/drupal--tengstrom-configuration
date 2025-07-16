@@ -2,7 +2,7 @@ name: Tengström Configuration - Email Logo
 package: Tengström Profile
 
 type: module
-core_version_requirement: ^9 || ^10
+core_version_requirement: ^10 || ^11
 
 dependencies:
   - drupal:image
