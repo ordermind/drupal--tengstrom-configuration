@@ -223,7 +223,7 @@ class ImageElementFactoryTest extends UnitTestCase {
         '@size' => '200 KB',
       ],
     );
-    $expectedResult['#upload_validators']['file_validate_extensions'] = ['gif'];
+    $expectedResult['#upload_validators']['FileExtension']['extensions'] = 'gif';
 
     $this->assertEquals($expectedResult, $result);
   }
@@ -240,7 +240,7 @@ class ImageElementFactoryTest extends UnitTestCase {
         '@size' => '50 KB',
       ],
     );
-    $expectedResult['#upload_validators']['file_validate_size'] = [51200];
+    $expectedResult['#upload_validators']['FileSizeLimit']['fileLimit'] = 51200;
 
     $this->assertEquals($expectedResult, $result);
   }
